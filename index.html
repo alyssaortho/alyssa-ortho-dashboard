@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dr. Alyssa Orthodontics — Outcomes Dashboard 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.5.0/Recharts.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#EDF2F7;font-family:'Trebuchet MS','Century Gothic',sans-serif;}
+button{cursor:pointer;}
+::-webkit-scrollbar{height:4px;width:4px;}
+::-webkit-scrollbar-track{background:#EDF2F7;}
+::-webkit-scrollbar-thumb{background:#C9D6E3;border-radius:4px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState,useEffect,useCallback,createElement:h,Fragment}=React;
+const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,ReferenceLine,PieChart,Pie,Cell}=Recharts;
+
+const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
+const SHEET_TABS=[
+  {key:"January",tab:"Jan '26",hasBonham:false},
+  {key:"February",tab:"Feb '26",hasBonham:false},
+  {key:"March",tab:"March '26",hasBonham:false},
+  {key:"April",tab:"April '26",hasBonham:false},
+  {key:"May",tab:"May '26",hasBonham:true},
+  {key:"June",tab:"Jun '26",hasBonham:true},
+  {key:"July",tab:"Jul '26",hasBonham:true},
+  {key:"August",tab:"Aug '26",hasBonham:true},
+  {key:"September",tab:"Sep '26",hasBonham:true},
+  {key:"October",tab:"Oct '26",hasBonham:true},
+  {key:"November",tab:"Nov '26",hasBonham:true},
+  {key:"December",tab:"Dec '26",hasBonham:true},
+];
+const MONTH_KEYS=SHEET_TABS.map(s=>s.key);
+const C={bg:"#EDF2F7",panel:"#FFFFFF",panelAlt:"#F0F4F9",border:"#C9D6E3",royal:"#003087",blue:"#1a5fba",orange:"#E05A00",silver:"#718096",white:"#FFFFFF",teal:"#00BCD4",green:"#1a9e7a",text:"#1A202C",subtext:"#2D3748",muted:"#718096",purple:"#9B27AF"};
+const F="'Trebuchet MS','Century Gothic',sans-serif";
+
+const pct=v=>{if(!v)return null;const s=String(v).trim();if(s==="-"||s==="—"||s==="")return null;const n=parseFloat(s.replace("%",""));return isNaN(n)?null:n;};
+const num=v=>{if(!v)return null;const s=String(v).trim();if(s==="-"||s==="")return null;const n=parseInt(s.replace(/[^0-9.-]/g,""));return isNaN(n)?null:n;};
+const norm=s=>String(s||"").trim().toLowerCase().replace(/\s+/g," ");
+const accent=(v,g)=>v===100?C.purple:(!g||v>=g?C.blue:C.orange);
+const stxt=(v,g)=>{if(!g||v==null)return null;const d=(v-g).toFixed(1);return v>=g?`+${d}% above goal`:`${d}% below goal`;};
+
+function parseCSV(text){
+  const rows=[],row=[];let cur="",inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='"'){if(inQ&&text[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){row.push(cur);cur="";}
+    else if((c==='\n'||c==='\r')&&!inQ){
+      row.push(cur);cur="";
+      if(row.some(x=>x.trim()))rows.push([...row]);
+      row.length=0;
+      if(c==='\r'&&text[i+1]==='\n')i++;
+    }else cur+=c;
+  }
+  if(row.length){row.push(cur);if(row.some(x=>x.trim()))rows.push(row);}
+  return rows;
+}
+
+// Use JSONP-style Google Sheets visualization API to bypass CORS
+function fetchSheet(tabName){
+  return new Promise((resolve)=>{
+    const callbackName='cb_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=select+N,O&sheet=${encodeURIComponent(tabName)}&callback=${callbackName}`;
+    let done=false;
+    window[callbackName]=(data)=>{
+      done=true;
+      delete window[callbackName];
+      script.remove();
+      try{
+        // Parse the Google Visualization JSON response
+        const rows=data.table.rows;
+        // Convert to CSV-like array: each row has cols[13]=N, cols[14]=O
+        // But since we only selected N,O the indices are 0 and 1
+        const result=rows.map(r=>{
+          const n=r.c&&r.c[0]?String(r.c[0].v||""):"";
+          const o=r.c&&r.c[1]?String(r.c[1].v||""):"";
+          return {label:n.trim(),value:o.trim()};
+        }).filter(r=>r.label);
+        resolve(result);
+      }catch(e){resolve(null);}
+    };
+    script.onerror=()=>{done=true;delete window[callbackName];script.remove();resolve(null);};
+    setTimeout(()=>{if(!done){delete window[callbackName];script.remove();resolve(null);}},8000);
+    script.src=url;
+    document.head.appendChild(script);
+  });
+}
+
+function extractMonthData(labelList,hasBonham){
+  const labelMap={};
+  labelList.forEach(({label,value})=>{const k=norm(label);if(!labelMap[k])labelMap[k]=value;});
+  const get=(...cs)=>{
+    for(const c of cs){const v=labelMap[norm(c)];if(v!=null)return v;}
+    for(const c of cs){
+      const words=norm(c).split(" ").filter(w=>w.length>4);if(!words.length)continue;
+      const k=Object.keys(labelMap).find(k=>words.every(w=>k.includes(w)));if(k)return labelMap[k];
+    }
+    return null;
+  };
+  const TC_DEFS=[{name:"Alex",short:"Alex"},{name:"Sandra Diaz",short:"S.Diaz"},{name:"Sandra Stevens",short:"S.Stevens"},{name:"Ana Ferreria",short:"Ana"},{name:"Maricssa DelToro",short:"Maricssa"}];
+  const TC_NAMES=TC_DEFS.map(t=>t.name);
+  const tcSds=[],tcTrc=[],tcTable=[];
+  TC_DEFS.forEach(({name,short})=>{
+    const hdrIdx=labelList.findIndex((r,i)=>norm(r.label)===norm(name)&&(r.value===""||r.value==null)&&i>0);
+    if(hdrIdx===-1)return;
+    let rec=null,started=null,sdsVal=null,trcVal=null,eom=0,firstConv=false;
+    for(let j=hdrIdx+1;j<Math.min(hdrIdx+20,labelList.length);j++){
+      const lbl=norm(labelList[j].label),val=labelList[j].value;
+      if(TC_NAMES.some(n=>norm(n)===lbl&&labelList[j].value===""))break;
+      if(lbl==="total recommended treatment"||lbl==="total recommended treatment ")rec=num(val);
+      else if(lbl==="tx started total")started=num(val);
+      else if(lbl==="sds conversion %"||lbl==="sds conversion")sdsVal=pct(val);
+      else if(lbl==="conversion %"&&!firstConv){sdsVal=pct(val);firstConv=true;}
+      else if(lbl==="trc conversion %"||lbl==="trc conversion")trcVal=pct(val);
+      else if(lbl.includes("patients converted by eom"))eom=num(val)||0;
+    }
+    if(rec!==null||started!==null){
+      tcSds.push({tc:name,label:short,value:sdsVal??0,goal:50});
+      tcTrc.push({tc:name,label:short,value:trcVal??0,goal:70});
+      tcTable.push({name,short,rec:rec??0,started:started??0,sds:sdsVal!=null?`${sdsVal.toFixed(1)}%`:"—",eom,trc:trcVal??0});
+    }
+  });
+  const remote=[];
+  ["DENISON","GAINESVILLE"].forEach(locU=>{
+    const loc=locU.charAt(0)+locU.slice(1).toLowerCase();
+    const hdrIdx=labelList.findIndex(r=>norm(r.label).includes("remote conversion")&&norm(r.label).includes(locU.toLowerCase()));
+    if(hdrIdx===-1)return;
+    let lRec=null,lStart=null,lConv=null;
+    for(let j=hdrIdx+1;j<Math.min(hdrIdx+5,labelList.length);j++){
+      const lbl=norm(labelList[j].label),val=labelList[j].value;
+      if(lbl.includes("total remote exams recommended"))lRec=num(val);
+      else if(lbl.includes("remote exams started"))lStart=num(val);
+      else if(lbl==="conversion %"&&lConv==null)lConv=pct(val);
+    }
+    remote.push({location:loc,recommended:lRec??0,started:lStart??0,conversion:lConv??0,goal:70});
+  });
+  return{
+    examKeptAll:pct(get("Exam Kept Rate (All) Both Locations Kept/(Kept+Not Kept)","Exam Kept Rate (All) All Locations Kept/(Kept+Not Kept)")),
+    examKeptResched:pct(get("Exam Kept Rate with Reschedules within Same Month")),
+    totalNewExams:num(get("Total Number of New Exams")),
+    newExamKeptAll:pct(get("New Exam Kept Rate (Both Locations)","New Exam Kept Rate (All Locations)")),
+    newExamKeptDenison:pct(get("New Exam Kept Rate - Denison")),
+    newExamKeptGainesville:pct(get("New Exam Kept Rate  Gainesville","New Exam Kept Rate - Gainesville")),
+    newExamKeptBonham:hasBonham?pct(get("New Exam Kept Rate - Bonham")):null,
+    obsKeptAll:pct(get("All OBSERVATION Kept Rate OBS/RR/P2 (Both Locations)","All OBSERVATION Kept Rate OBS/RR/P2 (All Locations)")),
+    obsKeptDenison:pct(get("All OBSERVATION Kept Rate OBS/RR/P2 - Denison")),
+    obsKeptGainesville:pct(get("All OBSERVATION Kept Rate OBS/RR/P2- Gainesville","All OBSERVATION Kept Rate OBS/RR/P2 - Gainesville")),
+    obsKeptBonham:hasBonham?pct(get("All OBSERVATION Kept Rate OBS/RR/P2 - Bonham","All OBSERVATION Kept Rate OBS/RR/P2- Bonham")):null,
+    sdsTotal:pct(get("Same Day Conversion (Both Locations)","Same Day Conversion (All Locations)")),sdsGoal:50,
+    totalSameDay:num(get("Total Same Day Starts (Both Locations)","Total Same Day Starts (All Locations)")),
+    denStarts:num(get("Total Same Day Starts - Denison")),gainStarts:num(get("Total Same Day Starts - Gainesville")),
+    bonStarts:hasBonham?num(get("Total Same Day Starts - Bonham")):null,
+    eomTotal:pct(get("EOM TRC ALL EXAMS (Both Locations)","EOM TRC ALL EXAMS (All Locations)")),eomTotalGoal:70,
+    eomNewDenison:pct(get("EOM New Exams - Denison")),eomNewGainesville:pct(get("EOM New Exams - Gainesville")),
+    eomNewBonham:hasBonham?pct(get("EOM New Exams - Bonham")):null,
+    eomObsDenison:pct(get("EOM OBS (OBS/RR/P2) - Denison")),eomObsGainesville:pct(get("EOM OBS (OBS/RR/P2) - Gainesville")),
+    eomObsBonham:hasBonham?pct(get("EOM OBS (OBS/RR/P2) - Bonham")):null,
+    eomNewAll:pct(get("EOM TRC New Exam Conversion (Both Locations)","EOM TRC New Exam Conversion (All Locations)")),
+    eomObsAll:pct(get("EOM TRC OBS (OBS/RR/P2) Conversion (Both Locations)","EOM TRC OBS (OBS/RR/P2) Conversion (All Locations)")),
+    eomConverted:num(get("# of patients converted at EOM")),
+    totalNewCompleted:num(get("Total # of New Exams Completed")),totalObsCompleted:num(get("Total # of Observation (OBS/RR/P2) Appt Completed")),
+    newConverted:num(get("Total # of New Exams Converted")),newPending:num(get("Total # of New Exams that went into Pending")),
+    newIntoObs:num(get("Total # of New Exams that went into OBS")),obsConverted:num(get("Total # of OBS (OBS/RR/P2) Converted")),
+    obsPending:num(get("Total # of OBS (OBS/RR/P2) that went into Pending")),obsStayed:num(get("Total # of OBS (OBS/RR/P2) that stayed in OBS")),
+    totalRec:num(get("Total Treatment Recommended from All Exam Types  (NP/OBS/RR/2 + All TCs)")),
+    tcSds,tcTrc,tcTable,
+    remote:remote.length?remote:[{location:"Denison",recommended:0,started:0,conversion:0,goal:70},{location:"Gainesville",recommended:0,started:0,conversion:0,goal:70}],
+    hasBonham,
+  };
+}
+
+function KpiCard({label,value,goal,large,isCount}){
+  const isTbd=value==null;
+  const col=isTbd?C.muted:(isCount?C.blue:accent(value,goal));
+  const pp=(!isTbd&&!isCount&&goal)?Math.min((value/goal)*100,100):null;
+  const sl=(!isTbd&&!isCount&&goal)?stxt(value,goal):null;
+  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:large?"24px 22px 18px":"18px 20px 14px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h('p',{style:{color:C.subtext,fontSize:large?11:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},label),
+    h('p',{style:{color:col,fontSize:large?52:40,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":isCount?value:`${value}%`),
+    !isTbd&&!isCount&&goal&&h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},`Goal ${goal}%`,sl&&h('span',{style:{color:col,marginLeft:8,fontWeight:700}},sl)),
+    isTbd&&h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"No data"),
+    pp!=null&&h('div',{style:{height:3,background:C.border,borderRadius:4,marginTop:4,overflow:"hidden"}},h('div',{style:{height:"100%",width:`${pp}%`,background:col,borderRadius:4}}))
+  );
+}
+function MetricTile({label,value,goal}){
+  const isTbd=value==null;const col=isTbd?C.muted:accent(value,goal);
+  return h('div',{style:{background:C.panelAlt,border:`1px solid ${C.border}`,borderLeft:`3px solid ${col}`,borderRadius:8,padding:"10px 14px",display:"flex",flexDirection:"column",gap:2}},
+    h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:0,fontFamily:F}},label),
+    h('p',{style:{color:col,fontSize:22,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":`${value}%`),
+    !isTbd&&goal&&stxt(value,goal)&&h('p',{style:{color:col,fontSize:9,margin:0,fontFamily:F}},stxt(value,goal))
+  );
+}
+function GoalBar({data,title,height=240}){
+  const goalVal=data.find(d=>d.goal!=null)?.goal??null;
+  const CB=(props)=>{const{x,y,width,height:ht,value,goal}=props;return h('rect',{x,y,width,height:Math.max(ht||0,2),fill:(!value||value===0)?C.border:accent(value,goal),rx:3});};
+  const CT=({active,payload})=>{if(!active||!payload?.length)return null;const item=payload[0].payload;return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",fontFamily:F,fontSize:12}},h('p',{style:{color:C.text,fontWeight:700,margin:"0 0 4px"}},item.label),item.value?h('p',{style:{color:accent(item.value,item.goal),margin:0,fontWeight:700}},`${item.value}%`):h('p',{style:{color:C.muted,margin:0}},"No data"));};
+  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 16px 8px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 12px",fontFamily:F}},title),
+    h(ResponsiveContainer,{width:"100%",height},h(BarChart,{data,margin:{top:14,right:14,left:-12,bottom:4}},
+      h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border}),
+      h(XAxis,{dataKey:"label",tick:{fill:C.subtext,fontSize:11,fontFamily:F},axisLine:false,tickLine:false}),
+      h(YAxis,{tick:{fill:C.subtext,fontSize:11,fontFamily:F},axisLine:false,tickLine:false,tickFormatter:v=>`${v}%`,domain:[0,100]}),
+      h(Tooltip,{content:h(CT)}),
+      goalVal!=null&&h(ReferenceLine,{y:goalVal,stroke:C.royal,strokeDasharray:"6 3",strokeWidth:2,label:{value:`Goal ${goalVal}%`,position:"insideTopRight",fill:C.royal,fontSize:10,fontFamily:F}}),
+      h(Bar,{dataKey:"value",shape:h(CB)})
+    ))
+  );
+}
+function Donut({data,title}){
+  const total=data.reduce((s,d)=>s+(d.value||0),0);
+  if(!total)return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 4px",fontFamily:F}},title),h('p',{style:{color:C.muted,padding:"40px 0",textAlign:"center",fontFamily:F}},"No data"));
+  const R=Math.PI/180;
+  const rl=({cx,cy,midAngle,outerRadius,value,name})=>{const r=outerRadius+38,x=cx+r*Math.cos(-midAngle*R),y=cy+r*Math.sin(-midAngle*R);return h('text',{textAnchor:x>cx?"start":"end",fill:C.subtext,fontSize:10,fontFamily:F},h('tspan',{x,y:y-6},name),h('tspan',{x,dy:14,fontWeight:"700",fill:C.text},`${value} (${((value/total)*100).toFixed(0)}%)`));};
+  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 10px 8px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 4px",fontFamily:F}},title),
+    h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Total: ${total}`),
+    h(ResponsiveContainer,{width:"100%",height:280},h(PieChart,{margin:{top:20,right:44,left:44,bottom:20}},
+      h(Pie,{data,cx:"50%",cy:"50%",innerRadius:52,outerRadius:76,paddingAngle:3,dataKey:"value",label:rl,labelLine:{stroke:C.border,strokeWidth:1}},data.map((e,i)=>h(Cell,{key:i,fill:e.color||C.blue}))),
+      h(Tooltip,{contentStyle:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,fontFamily:F,fontSize:12}})
+    ))
+  );
+}
+function TrendBar({allData,metricKey,goal,label,isCount}){
+  const loaded=MONTH_KEYS.filter(m=>allData[m]);
+  const data=loaded.map(m=>({label:m.slice(0,3),value:allData[m][metricKey]??null,goal})).filter(d=>d.value!=null);
+  if(!data.length)return null;
+  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px 8px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},`${label} — TREND`),
+    h(ResponsiveContainer,{width:"100%",height:90},h(BarChart,{data,margin:{top:4,right:4,left:-22,bottom:0}},
+      h(XAxis,{dataKey:"label",tick:{fill:C.muted,fontSize:9,fontFamily:F},axisLine:false,tickLine:false}),
+      h(YAxis,{domain:isCount?["auto","auto"]:[0,100],hide:true}),
+      h(Tooltip,{contentStyle:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,fontFamily:F,fontSize:11},formatter:v=>[isCount?v:`${v}%`]}),
+      goal&&h(ReferenceLine,{y:goal,stroke:C.royal,strokeDasharray:"4 2",strokeWidth:1}),
+      h(Bar,{dataKey:"value",radius:2},data.map((d,i)=>h(Cell,{key:i,fill:goal?accent(d.value,goal):C.blue})))
+    ))
+  );
+}
+
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"trends",label:"Trends"}];
+function SH({label,color,month}){return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},h('div',{style:{width:4,height:28,background:color,borderRadius:4}}),h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`));}
+
+function Dashboard(){
+  const [month,setMonth]=useState("May");
+  const [section,setSection]=useState("overview");
+  const [allData,setAllData]=useState({});
+  const [loading,setLoading]=useState(true);
+  const [loadMsg,setLoadMsg]=useState("Connecting to Google Sheet…");
+  const [lastRefresh,setLastRefresh]=useState(null);
+  const [error,setError]=useState(null);
+
+  const loadAll=useCallback(async()=>{
+    setLoading(true);setError(null);
+    const results={};
+    let count=0;
+    // Load sequentially with progress updates to avoid overwhelming JSONP
+    for(const {key,tab,hasBonham} of SHEET_TABS){
+      setLoadMsg(`Loading ${key}… (${++count}/12)`);
+      try{
+        const data=await fetchSheet(tab);
+        if(data&&data.length>5){
+          results[key]=extractMonthData(data,hasBonham);
+        }
+      }catch(e){}
+    }
+    setAllData(results);setLastRefresh(new Date());setLoading(false);
+    const loaded=MONTH_KEYS.filter(m=>results[m]);
+    if(loaded.length)setMonth(loaded[loaded.length-1]);
+    else setError("Could not load data. Check your internet connection and make sure the Google Sheet is shared publicly.");
+  },[]);
+
+  useEffect(()=>{loadAll();},[]);
+  const d=allData[month];
+  const lc=Object.keys(allData).length;
+
+  return h('div',{style:{background:C.bg,minHeight:"100vh",fontFamily:F}},
+    h('div',{style:{background:`linear-gradient(135deg,${C.royal} 0%,#001a4d 100%)`,borderBottom:`3px solid ${C.orange}`,padding:"20px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}},
+      h('div',null,
+        h('h1',{style:{margin:0,fontSize:22,fontWeight:900,color:C.white,letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:F}},"◈ Outcomes Dashboard"),
+        h('p',{style:{margin:"4px 0 0",color:"#a0bddf",fontSize:11,letterSpacing:"0.06em",fontFamily:F}},"Dr. Alyssa Orthodontics · 2026 · Denison · Gainesville · Bonham")
+      ),
+      h('div',{style:{display:"flex",gap:12,alignItems:"center"}},
+        loading?h('span',{style:{color:"#a0bddf",fontSize:12,fontFamily:F}},`⟳ ${loadMsg}`):
+        h(Fragment,null,
+          h('span',{style:{width:9,height:9,borderRadius:"50%",background:lc?C.teal:C.orange,display:"inline-block",boxShadow:lc?`0 0 10px ${C.teal}`:"none"}}),
+          h('span',{style:{color:lc?C.teal:C.orange,fontSize:13,fontWeight:700,fontFamily:F}},lc?`LIVE — ${lc} months`:"OFFLINE"),
+          lastRefresh&&h('span',{style:{color:"#a0bddf",fontSize:10,fontFamily:F}},lastRefresh.toLocaleTimeString()),
+          h('button',{onClick:loadAll,style:{background:"none",border:"1px solid #a0bddf",color:"#a0bddf",borderRadius:6,padding:"5px 12px",fontSize:11,fontFamily:F}},"↻ Refresh")
+        )
+      )
+    ),
+    h('div',{style:{background:C.royal,display:"flex",overflowX:"auto",padding:"0 28px",borderBottom:"1px solid #001a4d"}},
+      MONTH_KEYS.map(m=>{const active=m===month,hasD=!!allData[m];return h('button',{key:m,onClick:()=>setMonth(m),style:{padding:"12px 16px",background:"none",border:"none",color:active?C.white:hasD?"#a0bddf":"#3a5a90",borderBottom:active?`3px solid ${C.orange}`:"3px solid transparent",fontSize:12,fontWeight:active?800:400,fontFamily:F,whiteSpace:"nowrap",letterSpacing:"0.06em"}},m.slice(0,3).toUpperCase());})
+    ),
+    h('div',{style:{background:C.panelAlt,borderBottom:`2px solid ${C.border}`,display:"flex",padding:"0 36px",overflowX:"auto"}},
+      SECTIONS.map(sec=>h('button',{key:sec.id,onClick:()=>setSection(sec.id),style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?C.royal:C.muted,borderBottom:section===sec.id?`3px solid ${C.orange}`:"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.label))
+    ),
+    error&&!loading&&h('div',{style:{margin:"24px 36px",background:"#FFF5F5",border:"1px solid #FEB2B2",borderRadius:10,padding:"16px 20px"}},
+      h('p',{style:{color:"#C53030",fontFamily:F,fontSize:13,margin:0}},"⚠ "+error)
+    ),
+    loading&&h('div',{style:{display:"flex",alignItems:"center",justifyContent:"center",height:500,flexDirection:"column",gap:16}},
+      h('div',{style:{width:60,height:60,border:`4px solid ${C.border}`,borderTop:`4px solid ${C.blue}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}),
+      h('p',{style:{color:C.subtext,fontSize:17,fontFamily:F,fontWeight:600}},loadMsg),
+      h('p',{style:{color:C.muted,fontSize:12,fontFamily:F}},"Fetching live data from Google Sheets…"),
+      h('style',null,"@keyframes spin{to{transform:rotate(360deg)}}")
+    ),
+    !loading&&!d&&h('div',{style:{display:"flex",alignItems:"center",justifyContent:"center",height:420,flexDirection:"column",gap:14}},
+      h('p',{style:{fontSize:48,margin:0}},"📋"),
+      h('p',{style:{color:C.muted,fontSize:16,fontFamily:F}},`No data for ${month} yet`),
+      h('button',{onClick:loadAll,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F}},"↻ Retry")
+    ),
+    !loading&&d&&h('div',{style:{padding:"32px 36px",maxWidth:1500}},
+      section==="overview"&&h('div',null,
+        h(SH,{label:"KPIs",color:C.blue,month}),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:28}},
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll,large:true}),
+          h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
+          h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true})
+        ),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:22}},
+          h(GoalBar,{title:"EOM TRC — NEW EXAMS BY LOCATION",data:[{label:"Denison",value:d.eomNewDenison,goal:70},{label:"Gainesville",value:d.eomNewGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomNewBonham,goal:70}]:[])]}),
+          h(GoalBar,{title:"EOM TRC — OBS BY LOCATION",data:[{label:"Denison",value:d.eomObsDenison,goal:70},{label:"Gainesville",value:d.eomObsGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomObsBonham,goal:70}]:[])]})
+        ),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          h(KpiCard,{label:"EOM New Exam Conv.",value:d.eomNewAll,goal:70}),
+          h(KpiCard,{label:"EOM OBS/RR/P2 Conv.",value:d.eomObsAll,goal:70})
+        ),
+        h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"SAME DAY & EOM CONVERSION BREAKDOWN"),
+          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12}},
+            [["SDS Total",d.totalSameDay],["Denison",d.denStarts],["Gainesville",d.gainStarts],...(d.hasBonham?[["Bonham",d.bonStarts]]:[]),["EOM Converts",d.eomConverted],["Total Recs",d.totalRec]].map(([lbl,val])=>
+              h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:`1px solid ${C.border}`}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
+                h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
+              )
+            )
+          )
+        )
+      ),
+      section==="tc"&&h('div',null,
+        h(SH,{label:"TC Performance",color:C.orange,month}),
+        d.tcTable.length?h(Fragment,null,
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
+            h(GoalBar,{title:"SDS% PER TC — GOAL: 50%",height:220,data:d.tcSds.map(r=>({label:r.label,value:r.value,goal:r.goal}))}),
+            h(GoalBar,{title:"TRC% PER TC — GOAL: 70%",height:220,data:d.tcTrc.map(r=>({label:r.label,value:r.value,goal:r.goal}))})
+          ),
+          h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",marginBottom:22,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"TC DETAIL COMPARISON"),
+            h('div',{style:{overflowX:"auto"}},
+              h('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:13,fontFamily:F}},
+                h('thead',null,h('tr',{style:{background:C.panelAlt}},["TC","Tx Rec","Tx Started","SDS%","EOM Conv","TRC%","vs Goal"].map(hd=>h('th',{key:hd,style:{padding:"10px 14px",textAlign:"left",color:C.subtext,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:`2px solid ${C.border}`,fontFamily:F}},hd)))),
+                h('tbody',null,d.tcTable.map((r,i)=>{const col=accent(r.trc,70),diff=(r.trc-70).toFixed(1);return h('tr',{key:i,style:{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.panel:C.panelAlt}},h('td',{style:{padding:"10px 14px",color:C.text,fontWeight:700}},r.name),h('td',{style:{padding:"10px 14px",color:C.subtext}},r.rec),h('td',{style:{padding:"10px 14px",color:C.blue,fontWeight:600}},r.started),h('td',{style:{padding:"10px 14px",color:C.subtext}},r.sds),h('td',{style:{padding:"10px 14px",color:C.subtext}},r.eom),h('td',{style:{padding:"10px 14px",color:col,fontWeight:700}},`${r.trc}%`),h('td',{style:{padding:"10px 14px"}},h('span',{style:{color:col,fontSize:11,fontWeight:700,background:`${col}22`,padding:"2px 8px",borderRadius:4}},r.trc>=70?`+${diff}%`:`${diff}%`)));})
+              )
+            )
+          ),
+          h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
+            d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:46,fontWeight:900,margin:"0 0 6px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:12,margin:"0 0 12px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:4,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
+          )
+        ):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
+      ),
+      section==="exams"&&h('div',null,
+        h(SH,{label:"Exam Outcomes",color:C.teal,month}),
+        h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${C.blue}`,borderRadius:10,padding:"22px 28px",marginBottom:20,display:"flex",alignItems:"center",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h('div',{style:{minWidth:160}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"TOTAL NEW EXAMS"),h('p',{style:{color:C.blue,fontSize:58,fontWeight:900,margin:0,fontFamily:F}},d.totalNewExams??"—")),
+          h('div',{style:{width:1,background:C.border,alignSelf:"stretch",margin:"0 28px"}}),
+          h('div',{style:{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"14px",border:`1px solid ${C.border}`}},h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"New Exam Kept"),h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?`${d.newExamKeptAll}%`:"—")),
+            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"14px",border:`1px solid ${C.border}`}},h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"OBS Kept"),h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?`${d.obsKeptAll}%`:"—"))
+          )
+        ),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
+          h(KpiCard,{label:"New Exam Kept — All",value:d.newExamKeptAll,goal:85}),
+          h('div',{style:{display:"flex",flexDirection:"column",gap:8}},
+            h(MetricTile,{label:"New Exam Kept — Denison",value:d.newExamKeptDenison,goal:85}),
+            h(MetricTile,{label:"New Exam Kept — Gainesville",value:d.newExamKeptGainesville,goal:85}),
+            d.hasBonham&&h(MetricTile,{label:"New Exam Kept — Bonham",value:d.newExamKeptBonham,goal:85})
+          )
+        ),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:28}},
+          h(KpiCard,{label:"OBS Kept — All",value:d.obsKeptAll,goal:85}),
+          h('div',{style:{display:"flex",flexDirection:"column",gap:8}},
+            h(MetricTile,{label:"OBS Kept — Denison",value:d.obsKeptDenison,goal:85}),
+            h(MetricTile,{label:"OBS Kept — Gainesville",value:d.obsKeptGainesville,goal:85}),
+            d.hasBonham&&h(MetricTile,{label:"OBS Kept — Bonham",value:d.obsKeptBonham,goal:85})
+          )
+        ),
+        h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
+          h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
+          h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+          h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
+        )
+      ),
+      section==="trends"&&h('div',null,
+        h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
+          h(TrendBar,{allData,metricKey:"totalSameDay",goal:null,label:"SAME DAY STARTS",isCount:true}),
+          h(TrendBar,{allData,metricKey:"sdsTotal",goal:50,label:"SDS%"}),
+          h(TrendBar,{allData,metricKey:"eomTotal",goal:70,label:"EOM TRC TOTAL"}),
+          h(TrendBar,{allData,metricKey:"eomNewDenison",goal:70,label:"EOM NEW — DENISON"}),
+          h(TrendBar,{allData,metricKey:"eomNewGainesville",goal:70,label:"EOM NEW — GAINESVILLE"}),
+          h(TrendBar,{allData,metricKey:"eomObsAll",goal:70,label:"EOM OBS TOTAL"}),
+          h(TrendBar,{allData,metricKey:"examKeptResched",goal:85,label:"EXAM KEPT W/ RESCHED"}),
+          h(TrendBar,{allData,metricKey:"totalNewExams",goal:null,label:"TOTAL NEW EXAMS",isCount:true}),
+          h(TrendBar,{allData,metricKey:"newExamKeptAll",goal:85,label:"NEW EXAM KEPT"}),
+          h(TrendBar,{allData,metricKey:"obsKeptAll",goal:85,label:"OBS KEPT"})
+        ),
+        h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"MONTH-OVER-MONTH TABLE"),
+          h('div',{style:{overflowX:"auto"}},
+            h('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:12,fontFamily:F}},
+              h('thead',null,h('tr',{style:{background:C.panelAlt}},["Metric","Goal",...MONTH_KEYS.filter(m=>allData[m]).map(m=>m.slice(0,3).toUpperCase())].map(hd=>h('th',{key:hd,style:{padding:"10px 12px",textAlign:"left",color:C.subtext,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:`2px solid ${C.border}`,fontFamily:F,whiteSpace:"nowrap"}},hd)))),
+              h('tbody',null,
+                [{label:"SDS%",key:"sdsTotal",goal:50},{label:"Same Day Starts",key:"totalSameDay",goal:null,isCount:true},{label:"EOM TRC Total",key:"eomTotal",goal:70},{label:"EOM New Denison",key:"eomNewDenison",goal:70},{label:"EOM New G'ville",key:"eomNewGainesville",goal:70},{label:"EOM New Bonham",key:"eomNewBonham",goal:70},{label:"EOM OBS Total",key:"eomObsAll",goal:70},{label:"Exam Show Rate",key:"examKeptAll",goal:null},{label:"Exam Kept Resched",key:"examKeptResched",goal:85},{label:"Total New Exams",key:"totalNewExams",goal:null,isCount:true},{label:"New Exam Kept",key:"newExamKeptAll",goal:85},{label:"New Kept Denison",key:"newExamKeptDenison",goal:85},{label:"New Kept G'ville",key:"newExamKeptGainesville",goal:85},{label:"OBS Kept All",key:"obsKeptAll",goal:85},{label:"OBS Kept Denison",key:"obsKeptDenison",goal:85},{label:"OBS Kept G'ville",key:"obsKeptGainesville",goal:85}]
+                .map((row,i)=>h('tr',{key:i,style:{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.panel:C.panelAlt}},
+                  h('td',{style:{padding:"9px 12px",color:C.text,fontWeight:600,whiteSpace:"nowrap"}},row.label),
+                  h('td',{style:{padding:"9px 12px",color:C.muted}},row.goal?`${row.goal}%`:"—"),
+                  ...MONTH_KEYS.filter(m=>allData[m]).map(m=>{
+                    const val=allData[m]?.[row.key];
+                    const col=(row.goal&&val!=null)?accent(val,row.goal):C.text;
+                    return h('td',{key:m,style:{padding:"9px 12px",color:col,fontWeight:row.goal?"700":"400",whiteSpace:"nowrap"}},val!=null?(row.isCount?val:`${val}%`):"—");
+                  })
+                ))
+              )
+            )
+          )
+        )
+      )
+    ),
+    h('div',{style:{padding:"16px 36px",borderTop:`3px solid ${C.royal}`,marginTop:20,background:C.royal}},
+      h('p',{style:{color:"#a0bddf",fontSize:10,margin:0,fontFamily:F,letterSpacing:"0.06em"}},`DR. ALYSSA ORTHODONTICS · OUTCOMES DASHBOARD 2026 · LIVE FROM GOOGLE SHEETS${lastRefresh?` · Last refreshed ${lastRefresh.toLocaleString()}`:""}`))
+  );
+}
+ReactDOM.render(h(Dashboard),document.getElementById('root'));
+</script>
+</body>
+</html>
