@@ -364,7 +364,7 @@ function Dashboard(){
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:46,fontWeight:900,margin:"0 0 6px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:12,margin:"0 0 12px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:4,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
           )
-        ):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
+        )):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month}),
