@@ -394,9 +394,13 @@ function fetchSheet(tabName){
 
 function extractMonthData(labelList,hasBonham){
   const labelMap={};
-  labelList.forEach(({label,value})=>{const k=norm(label);if(!labelMap[k])labelMap[k]=value;});
+  // Normalize labels: collapse all whitespace/newlines to single space
+  labelList.forEach(({label,value})=>{
+    const k=norm(label.replace(/[\r\n]+/g," "));
+    if(!labelMap[k])labelMap[k]=value;
+  });
   const get=(...cs)=>{
-    for(const c of cs){const v=labelMap[norm(c)];if(v!=null)return v;}
+    for(const c of cs){const v=labelMap[norm(c.replace(/[\r\n]+/g," "))];if(v!=null)return v;}
     for(const c of cs){
       const words=norm(c).split(" ").filter(w=>w.length>4);if(!words.length)continue;
       const k=Object.keys(labelMap).find(k=>words.every(w=>k.includes(w)));if(k)return labelMap[k];
@@ -416,8 +420,20 @@ function extractMonthData(labelList,hasBonham){
       if(lbl==="total recommended treatment"||lbl==="total recommended treatment ")rec=num(val);
       else if(lbl==="tx started total")started=num(val);
       else if(lbl==="sds conversion %"||lbl==="sds conversion")sdsVal=pct(val);
-      else if(lbl==="conversion %"&&!firstConv){sdsVal=pct(val);firstConv=true;}
       else if(lbl==="trc conversion %"||lbl==="trc conversion")trcVal=pct(val);
+      else if(lbl==="conversion %"){
+        if(!firstConv){
+          firstConv=true;
+          // Check if this TC block has an explicit SDS label anywhere
+          const blockLabels=labelList.slice(hdrIdx+1,Math.min(hdrIdx+20,labelList.length)).map(r=>norm(r.label));
+          const hasSdsLabel=blockLabels.some(l=>l==="sds conversion %"||l==="sds conversion");
+          // Jan has no SDS label - lone "Conversion %" is TRC; other months it's SDS
+          if(hasSdsLabel){sdsVal=pct(val);}else{trcVal=pct(val);}
+        } else {
+          if(sdsVal===null)sdsVal=pct(val);
+          else if(trcVal===null)trcVal=pct(val);
+        }
+      }
       else if(lbl.includes("patients converted by eom"))eom=num(val)||0;
     }
     if(rec!==null||started!==null){
