@@ -558,16 +558,26 @@ function Dashboard(){
     setLoading(true);setError(null);
     const results={};
     let count=0;
-    // Load sequentially with progress updates to avoid overwhelming JSONP
+    const debugLog=[];
     for(const {key,tab,hasBonham} of SHEET_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
         const data=await fetchSheet(tab);
+        const rowCount=data?data.length:0;
+        debugLog.push(`${key}: ${rowCount} rows`);
+        console.log(`fetchSheet(${tab}):`,rowCount,'rows, first 3:',data?data.slice(0,3):null);
         if(data&&data.length>5){
           results[key]=extractMonthData(data,hasBonham);
+        }else{
+          console.warn(`${key}: skipped - only ${rowCount} rows`);
         }
-      }catch(e){}
+      }catch(e){
+        console.error(`${key} fetch error:`,e);
+        debugLog.push(`${key}: ERROR ${e.message}`);
+      }
     }
+    console.log('=== FETCH SUMMARY ===',debugLog.join(' | '));
+    console.log('=== MONTHS WITH DATA ===',Object.keys(results));
     setAllData(results);setLastRefresh(new Date());setLoading(false);
     const loaded=MONTH_KEYS.filter(m=>results[m]);
     if(loaded.length)setMonth(loaded[loaded.length-1]);
