@@ -407,6 +407,15 @@ function extractMonthData(labelList,hasBonham){
     }
     return null;
   };
+  // Special fuzzy finder for exam kept rate (label has newline in sheet, varies by month)
+  const getExamKeptAll=()=>{
+    const k=Object.keys(labelMap).find(k=>
+      k.includes("exam kept rate") && k.includes("all") &&
+      (k.includes("both locations")||k.includes("all locations")) &&
+      (k.includes("kept+not")||k.includes("kept not")||k.includes("kept/(kept"))
+    );
+    return k?pct(labelMap[k]):null;
+  };
   const TC_DEFS=[{name:"Alex",short:"Alex"},{name:"Sandra Diaz",short:"S.Diaz"},{name:"Sandra Stevens",short:"S.Stevens"},{name:"Ana Ferreria",short:"Ana"},{name:"Maricssa DelToro",short:"Maricssa"}];
   const TC_NAMES=TC_DEFS.map(t=>t.name);
   const tcSds=[],tcTrc=[],tcTable=[];
@@ -457,7 +466,7 @@ function extractMonthData(labelList,hasBonham){
     remote.push({location:loc,recommended:lRec??0,started:lStart??0,conversion:lConv??0,goal:70});
   });
   return{
-    examKeptAll:pct(get("Exam Kept Rate (All) Both Locations Kept/(Kept+Not Kept)","Exam Kept Rate (All) All Locations Kept/(Kept+Not Kept)")),
+    examKeptAll:getExamKeptAll(),
     examKeptResched:pct(get("Exam Kept Rate with Reschedules within Same Month")),
     totalNewExams:num(get("Total Number of New Exams")),
     newExamKeptAll:pct(get("New Exam Kept Rate (Both Locations)","New Exam Kept Rate (All Locations)")),
