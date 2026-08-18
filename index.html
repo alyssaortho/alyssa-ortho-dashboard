@@ -558,7 +558,117 @@ function TrendBar({allData,metricKey,goal,label,isCount}){
   );
 }
 
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"trends",label:"Trends"}];
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"trends",label:"Trends"},{id:"financial",label:"Financial",locked:true}];
+const FIN_PIN="9855";
+const FIN_STORAGE_KEY="ao_fin_2026";
+const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
+function FinancialTab({month}){
+  const [pin,setPin]=useState("");
+  const [unlocked,setUnlocked]=useState(false);
+  const [pinErr,setPinErr]=useState(false);
+  const [editing,setEditing]=useState(false);
+  const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
+  const [form,setForm]=useState(EMPTY_FIN());
+  const RG_PRICE=880,MIN_PROD=2980;
+  const save=()=>{
+    const updated={...allFin,[month]:{...form,savedAt:new Date().toISOString()}};
+    setAllFin(updated);
+    try{localStorage.setItem(FIN_STORAGE_KEY,JSON.stringify(updated));}catch(e){}
+    setEditing(false);
+  };
+  const startEdit=()=>{setForm(allFin[month]?{...allFin[month]}:EMPTY_FIN());setEditing(true);};
+  const tryPin=()=>{if(pin===FIN_PIN){setUnlocked(true);setPinErr(false);}else{setPinErr(true);setPin("");}};
+  const d=allFin[month];
+  const sp=parseFloat((d?.startProduction||"").replace(/[$,]/g,""))||0;
+  const ap=parseFloat((d?.adjustedProduction||"").replace(/[$,]/g,""))||0;
+  const col=parseFloat((d?.collections||"").replace(/[$,]/g,""))||0;
+  const ts=parseInt(d?.totalStarts||0)||0;
+  const sam=parseInt(d?.startsAtMin||0)||0;
+  const rg=parseInt(d?.rgCount||0)||0;
+  const colPct=ap>0?((col/ap)*100).toFixed(1):null;
+  const minPct=ts>0?((sam/ts)*100).toFixed(1):null;
+  const rgRev=rg*RG_PRICE;
+  const fmt=v=>v>0?"$"+v.toLocaleString():"--";
+  const accentFin=(v,t1,t2)=>v>=t1?C.green:v>=t2?C.blue:C.orange;
+  if(!unlocked)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:480,flexDirection:"column"}},
+    h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:16,padding:"40px 48px",boxShadow:"0 4px 24px rgba(0,48,135,0.12)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,minWidth:320}},
+      h("div",{style:{fontSize:40}},"Lock"),
+      h("p",{style:{color:C.text,fontWeight:900,fontSize:16,fontFamily:F,margin:0,letterSpacing:"0.08em",textTransform:"uppercase"}},"Financial Data"),
+      h("p",{style:{color:C.muted,fontSize:12,fontFamily:F,margin:0}},"Enter PIN to access"),
+      h("input",{type:"password",maxLength:8,value:pin,onChange:function(e){setPin(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")tryPin();},placeholder:"****",style:{textAlign:"center",fontSize:28,letterSpacing:"0.4em",border:"2px solid "+(pinErr?C.orange:C.border),borderRadius:10,padding:"12px 20px",width:160,fontFamily:F,outline:"none",background:C.panelAlt,color:C.text}}),
+      pinErr&&h("p",{style:{color:C.orange,fontSize:12,fontFamily:F,margin:0}},"Incorrect PIN"),
+      h("button",{onClick:tryPin,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"12px 32px",fontSize:14,fontWeight:700,fontFamily:F,cursor:"pointer"}},"UNLOCK")
+    )
+  );
+  if(editing)return h("div",null,
+    h(SH,{label:"Financial - Data Entry",color:C.green,month:month}),
+    h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"32px 36px",maxWidth:580,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+      h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"0 0 24px",letterSpacing:"0.06em",textTransform:"uppercase"}},"Enter figures from OrthoFi Reports"),
+      ...[
+        {key:"startProduction",label:"Start Production",hint:"Reports > Monthly Balance Sheet"},
+        {key:"adjustedProduction",label:"Adjusted Production",hint:"Reports > Monthly Balance Sheet"},
+        {key:"collections",label:"Collections",hint:"Reports > Collection Summary"},
+        {key:"totalStarts",label:"Total Starts",hint:"Reports > Starts"},
+        {key:"startsAtMin",label:"Starts Meeting $2,980 Minimum",hint:"Reports > Starts (count at or above minimum)"},
+        {key:"rgCount",label:"Retainer Guarantees Sold",hint:"Patient ledger > fee breakdown > RG $880"},
+      ].map(function(f){return h("div",{key:f.key,style:{marginBottom:18}},
+        h("label",{style:{display:"block",color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:F,marginBottom:4}},f.label),
+        h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"0 0 6px"}},f.hint),
+        h("input",{type:"text",value:form[f.key],onChange:function(e){var v=e.target.value;setForm(function(prev){var n={};Object.keys(prev).forEach(function(k){n[k]=prev[k];});n[f.key]=v;return n;});},
+          placeholder:["totalStarts","startsAtMin","rgCount"].includes(f.key)?"0":"0.00",
+          style:{border:"1px solid "+C.border,borderRadius:8,padding:"10px 14px",fontSize:15,fontFamily:F,width:"100%",outline:"none",background:C.panelAlt,color:C.text}})
+      );}),
+      h("div",{style:{display:"flex",gap:12,marginTop:16}},
+        h("button",{onClick:save,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"12px 28px",fontSize:13,fontWeight:700,fontFamily:F,cursor:"pointer"}},"Save"),
+        h("button",{onClick:function(){setEditing(false);},style:{background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:8,padding:"12px 20px",fontSize:13,fontFamily:F,cursor:"pointer"}},"Cancel")
+      )
+    )
+  );
+  return h("div",null,
+    h(SH,{label:"Financial Overview",color:C.green,month:month}),
+    h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:16}},
+      h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:12,fontWeight:700,fontFamily:F,cursor:"pointer"}},d?"Edit Data":"+ Enter Data")
+    ),
+    !d?h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:360,flexDirection:"column",gap:14}},
+      h("p",{style:{fontSize:40,margin:0}},"chart"),
+      h("p",{style:{color:C.muted,fontSize:16,fontFamily:F}},"No financial data for "+month+" yet"),
+      h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F,cursor:"pointer"}},"+ Enter Data")
+    ):h("div",null,
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Start Production"),
+          h("p",{style:{color:C.blue,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(sp))
+        ),
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Adjusted Production"),
+          h("p",{style:{color:C.blue,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(ap))
+        ),
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+(colPct?accentFin(parseFloat(colPct),95,85):C.muted),borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collections"),
+          h("p",{style:{color:colPct?accentFin(parseFloat(colPct),95,85):C.muted,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(col)),
+          colPct&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},colPct+"% of Adjusted Production")
+        )
+      ),
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Total Starts"),
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},ts||"--")
+        ),
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+(minPct?accentFin(parseFloat(minPct),80,60):C.muted),borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts at $2,980 Min"),
+          h("p",{style:{color:minPct?accentFin(parseFloat(minPct),80,60):C.muted,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},minPct?minPct+"%":"--"),
+          ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
+        ),
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
+          h("p",{style:{color:C.purple,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},rg||"--"),
+          rg>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},fmt(rgRev)+" revenue"+(ts>0?" · "+((rg/ts)*100).toFixed(0)+"% attach rate":""))
+        )
+      ),
+      d.savedAt&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0",textAlign:"right"}},"Last updated: "+new Date(d.savedAt).toLocaleString())
+    )
+  );
+}
 function SH({label,color,month}){return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},h('div',{style:{width:4,height:28,background:color,borderRadius:4}}),h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`));}
 
 function Dashboard(){
@@ -624,7 +734,7 @@ function Dashboard(){
       MONTH_KEYS.map(m=>{const active=m===month,hasD=!!allData[m];return h('button',{key:m,onClick:()=>setMonth(m),style:{padding:"12px 16px",background:"none",border:"none",color:active?C.white:hasD?"#a0bddf":"#3a5a90",borderBottom:active?`3px solid ${C.orange}`:"3px solid transparent",fontSize:12,fontWeight:active?800:400,fontFamily:F,whiteSpace:"nowrap",letterSpacing:"0.06em"}},m.slice(0,3).toUpperCase());})
     ),
     h('div',{style:{background:C.panelAlt,borderBottom:`2px solid ${C.border}`,display:"flex",padding:"0 36px",overflowX:"auto"}},
-      SECTIONS.map(sec=>h('button',{key:sec.id,onClick:()=>setSection(sec.id),style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?C.royal:C.muted,borderBottom:section===sec.id?`3px solid ${C.orange}`:"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.label))
+      SECTIONS.map(sec=>h("button",{key:sec.id,onClick:function(){setSection(sec.id);},style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?(sec.locked?C.green:C.royal):C.muted,borderBottom:section===sec.id?"3px solid "+(sec.locked?C.green:C.orange):"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.locked?"🔒 Financial":sec.label))
     ),
     error&&!loading&&h('div',{style:{margin:"24px 36px",background:"#FFF5F5",border:"1px solid #FEB2B2",borderRadius:10,padding:"16px 20px"}},
       h('p',{style:{color:"#C53030",fontFamily:F,fontSize:13,margin:0}},"⚠ "+error)
@@ -722,7 +832,8 @@ function Dashboard(){
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
       ),
-      section==="trends"&&h('div',null,
+      section==="financial"&&h(FinancialTab,{month:month}),
+            section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
           h(TrendBar,{allData,metricKey:"totalSameDay",goal:null,label:"SAME DAY STARTS",isCount:true}),
