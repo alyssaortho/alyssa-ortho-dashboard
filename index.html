@@ -763,7 +763,16 @@ function Dashboard(){
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:28}},
-          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll,large:true}),
+          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Starts"),
+            h('p',{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},d.totalRec??"--"),
+            h('div',{style:{marginTop:8,display:"flex",flexDirection:"column",gap:3}},
+              h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"SDS: "+(d.totalSameDay??0)),
+              h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"EOM Converted: "+(d.eomConverted??0)),
+              h('div',{style:{height:1,background:C.border,margin:"4px 0"}}),
+              h('p',{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+((d.totalSameDay??0)+(d.eomConverted??0)))
+            )
+          ),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
           h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true})
         ),
@@ -775,15 +784,17 @@ function Dashboard(){
           h(KpiCard,{label:"EOM New Exam Conv.",value:d.eomNewAll,goal:70}),
           h(KpiCard,{label:"EOM OBS/RR/P2 Conv.",value:d.eomObsAll,goal:70})
         ),
-        h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"SAME DAY & EOM CONVERSION BREAKDOWN"),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
+          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
+        ),
+        h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"CONVERSION BREAKDOWN BY LOCATION"),
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12}},
-            [["SDS Total",d.totalSameDay],["Denison",d.denStarts],["Gainesville",d.gainStarts],...(d.hasBonham?[["Bonham",d.bonStarts]]:[]),["EOM Converts",d.eomConverted],["Total Recs",d.totalRec]].map(([lbl,val])=>
-              h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:`1px solid ${C.border}`}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
-                h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
-              )
-            )
+            [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){var lbl=item[0],val=item[1];return h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:"1px solid "+C.border}},
+              h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
+              h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
+            );})
           )
         )
       ),
