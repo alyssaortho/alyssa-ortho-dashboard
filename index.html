@@ -771,7 +771,7 @@ function Dashboard(){
     !loading&&d&&h('div',{style:{padding:"32px 36px",maxWidth:1500}},
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month}),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:28}},
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Starts"),
             h('p',{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},d.totalRec??"--"),
@@ -780,6 +780,16 @@ function Dashboard(){
               h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"EOM Converted: "+(d.eomConverted??0)),
               h('div',{style:{height:1,background:C.border,margin:"4px 0"}}),
               h('p',{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+((d.totalSameDay??0)+(d.eomConverted??0)))
+            )
+          ),
+          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG Provided"),
+            h('p',{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},
+              (()=>{try{const s=localStorage.getItem("ao_fin_2026");if(s){const fin=JSON.parse(s);const mo=fin[month];if(mo&&mo.rgCount)return parseInt(mo.rgCount)||"--";}return "--";}catch(e){return "--";}})()
+            ),
+            h('div',{style:{marginTop:8,display:"flex",flexDirection:"column",gap:3}},
+              h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"$880 per RG"),
+              h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"Enter in Financial tab")
             )
           ),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
