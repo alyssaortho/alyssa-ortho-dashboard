@@ -493,6 +493,12 @@ function extractMonthData(labelList,hasBonham){
     newConverted:num(get("Total # of New Exams Converted")),newPending:num(get("Total # of New Exams that went into Pending")),
     newIntoObs:num(get("Total # of New Exams that went into OBS")),obsConverted:num(get("Total # of OBS (OBS/RR/P2) Converted")),
     obsPending:num(get("Total # of OBS (OBS/RR/P2) that went into Pending")),obsStayed:num(get("Total # of OBS (OBS/RR/P2) that stayed in OBS")),
+    newNotKept:num(get("Total # of New Exams Not Kept","Total Not Kept New","# New Exams Not Kept")),
+    newRescheduled:num(get("Total # of New Exams Rescheduled","Total Exams New Rescheduled Same Month","# New Exams Rescheduled within Same Month")),
+    obsNotKept:num(get("Total # of OBS (OBS/RR/P2) Not Kept","Total Not Kept OBS","# OBS Not Kept")),
+    obsRescheduled:num(get("Total # of OBS (OBS/RR/P2) Rescheduled","Total OBS Rescheduled Same Month","# OBS Rescheduled within Same Month")),
+    totalNotKeptAll:num(get("Total Not Kept (All) - Pt Did Not Show or Pt Cancelled","Total Not Kept (All)")),
+    totalRescheduledAll:num(get("Total Exams (All) Rescheduled","Total Rescheduled (All)")),
     totalRec:num(get("Total Treatment Recommended from All Exam Types  (NP/OBS/RR/2 + All TCs)")),
     tcSds,tcTrc,tcTable,
     remote:remote.length?remote:[{location:"Denison",recommended:0,started:0,conversion:0,goal:70},{location:"Gainesville",recommended:0,started:0,conversion:0,goal:70}],
@@ -699,10 +705,13 @@ function Dashboard(){
       try{
         const data=await fetchSheet(tab);
         const rowCount=data?data.length:0;
-        debugLog.push(`${key}: ${rowCount} rows`);
-        console.log(`fetchSheet(${tab}):`,rowCount,'rows, first 3:',data?data.slice(0,3):null);
+        console.log(`fetchSheet(${tab}):`,rowCount,'rows');
         if(data&&data.length>5){
-          results[key]=extractMonthData(data,hasBonham);
+          const parsed=extractMonthData(data,hasBonham);
+          // Only accept month if it has at least one real metric (prevents phantom Sept-Dec data)
+          const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
+          if(hasRealData){results[key]=parsed;console.log(`${key}: valid data loaded`);}
+          else{console.warn(`${key}: rows found but no real metrics - skipping (tab may be empty)`);}
         }else{
           console.warn(`${key}: skipped - only ${rowCount} rows`);
         }
@@ -846,10 +855,42 @@ function Dashboard(){
             d.hasBonham&&h(MetricTile,{label:"OBS Kept — Bonham",value:d.obsKeptBonham,goal:85})
           )
         ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
+        h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:20}},
           h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
           h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
+        ),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"NEW EXAM — NOT KEPT & RESCHEDULED"),
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"12px 16px"}},
+                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Not Kept"),
+                h('p',{style:{color:C.orange,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.newNotKeptAll??d.newNotKept??d.totalNotKeptAll??"--"),
+                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Did not show / cancelled")
+              ),
+              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal,borderRadius:8,padding:"12px 16px"}},
+                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Rescheduled Same Month"),
+                h('p',{style:{color:C.teal,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.newRescheduled??d.totalRescheduledAll??"--"),
+                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Column G → Rescheduled")
+              )
+            )
+          ),
+          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"OBS / RR / P2 — NOT KEPT & RESCHEDULED"),
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"12px 16px"}},
+                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Not Kept"),
+                h('p',{style:{color:C.orange,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
+                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Did not show / cancelled")
+              ),
+              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal,borderRadius:8,padding:"12px 16px"}},
+                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Rescheduled Same Month"),
+                h('p',{style:{color:C.teal,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.obsRescheduled??"--"),
+                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Column G → Rescheduled")
+              )
+            )
+          )
         )
       ),
       section==="financial"&&h(FinancialTab,{month:month}),
