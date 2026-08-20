@@ -324,35 +324,7 @@ const {useState,useEffect,useCallback,createElement:h,Fragment}=React;
 const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,ReferenceLine,PieChart,Pie,Cell}=Recharts;
 
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
-const PP_SHEET_ID="1pGmvyfGIB7tz-g_PRYwpCmfbV32-Ktz1ehR5CVbkP78";
-// Fetch Practice Performance sheet: count rows where Col M >= 2980 (Starts)
-// and Col K = TRUE or non-zero (RG provided)
-function fetchPracticePerf(tabName){
-  // Select columns K (RG) and M (production amount)
-  const url=`https://docs.google.com/spreadsheets/d/${PP_SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+K,M&sheet=${encodeURIComponent(tabName)}`;
-  return fetch(url)
-    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
-    .then(csv=>{
-      const lines=csv.split("\n").filter(l=>l.trim());
-      let starts=0,rg=0;
-      for(let i=1;i<lines.length;i++){// skip header
-        const parts=[];let c="",inQ=false;
-        for(let j=0;j<lines[i].length;j++){
-          const ch=lines[i][j];
-          if(ch==='"'){if(inQ&&lines[i][j+1]==='"'){c+='"';j++;}else inQ=!inQ;}
-          else if(ch===","&&!inQ){parts.push(c);c="";}
-          else c+=ch;
-        }
-        parts.push(c);
-        const kVal=(parts[0]||"").trim().replace(/^"|"$/g,"").toLowerCase();
-        const mVal=parseFloat((parts[1]||"").trim().replace(/[$,"]/g,""));
-        if(!isNaN(mVal)&&mVal>=2980)starts++;
-        if(kVal==="true"||kVal==="1"||(parseFloat(kVal)>0&&kVal!=="-"&&kVal!==""))rg++;
-      }
-      return {starts,rg};
-    })
-    .catch(e=>{console.error("fetchPracticePerf error:",e);return null;});
-}
+// Practice Performance data entered manually via Financial tab
 const SHEET_TABS=[
   {key:"January",tab:"Jan '26",hasBonham:false,examRow:7},
   {key:"February",tab:"Feb '26",hasBonham:false,examRow:7},
@@ -398,14 +370,25 @@ function parseCSV(text){
 
 // Fetch Google Sheet data via CSV export (works from GitHub Pages, no CORS issues)
 function fetchCellValue(tabName,row,col){
-  // Fetch a specific cell by row/col number (1-indexed)
-  const colLetter=String.fromCharCode(64+col);
-  const cellRef=colLetter+row;
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+${colLetter}&sheet=${encodeURIComponent(tabName)}&range=${cellRef}`;
-  return fetch(url).then(r=>r.text()).then(csv=>{
-    const val=csv.split("\n")[1]||"";
-    return val.trim().replace(/^"|"$/g,"");
-  }).catch(()=>null);
+  // Use JSONP to fetch a specific cell - avoids CORS/redirect issues
+  return new Promise((resolve)=>{
+    const colLetter=String.fromCharCode(64+col);
+    const tq=encodeURIComponent(`select ${colLetter} limit 1 offset ${row-1}`);
+    const cbName='cellcb_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+    window[cbName]=(data)=>{
+      done=true;delete window[cbName];script.remove();
+      try{
+        const v=data.table.rows[0]?.c[0]?.v;
+        resolve(v!=null?String(v):null);
+      }catch(e){resolve(null);}
+    };
+    script.onerror=()=>{done=true;delete window[cbName];script.remove();resolve(null);};
+    setTimeout(()=>{if(!done){delete window[cbName];script.remove();resolve(null);}},6000);
+    script.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=${tq}&sheet=${encodeURIComponent(tabName)}&callback=${cbName}`;
+    document.head.appendChild(script);
+  });
 }
 function fetchSheet(tabName){
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+N,O&sheet=${encodeURIComponent(tabName)}`;
@@ -676,7 +659,7 @@ function InlineEntry({label,value,onSave,color}){
         )
   );
 }
-function StartsCard({month,d,ppData,allFin,savePending}){
+function StartsCard({month,d,allFin,savePending}){
   const sds=d.totalSameDay??0;
   const eom=d.eomConverted??0;
   const pendingStarts=parseInt(allFin[month]?.pendingStarts||0)||0;
@@ -824,12 +807,11 @@ function Dashboard(){
     setAllFin(updated);
     try{localStorage.setItem(FIN_STORAGE_KEY,JSON.stringify(updated));}catch(e){}
   };
-  const [ppData,setPpData]=useState({});
 
   const loadAll=useCallback(async()=>{
     setLoading(true);setError(null);
     const results={};
-    const ppResults={};
+
     let count=0;
     const debugLog=[];
     for(const {key,tab,hasBonham,examRow} of SHEET_TABS){
@@ -842,9 +824,16 @@ function Dashboard(){
           // Fetch exam show rate directly from cell O7 (Jan/Feb) or O8 (Mar+)
           try{
             const examCell=await fetchCellValue(tab,examRow,15);
-            if(examCell&&examCell.includes("%")){
-              parsed.examKeptAll=parseFloat(examCell.replace("%","").trim())||null;
-              console.log(`${key} examKeptAll from O${examRow}:`,parsed.examKeptAll);
+            console.log(`${key} raw cell O${examRow}:`,examCell);
+            if(examCell!=null){
+              // Value may come as decimal (0.7638) or percent string (76.38%)
+              let v=parseFloat(String(examCell).replace("%","").trim());
+              if(!isNaN(v)){
+                // If value is between 0 and 1, it's a decimal - multiply by 100
+                if(v>0&&v<=1)v=Math.round(v*10000)/100;
+                parsed.examKeptAll=Math.round(v*100)/100;
+                console.log(`${key} examKeptAll:`,parsed.examKeptAll);
+              }
             }
           }catch(e){console.warn(`${key} cell fetch failed:`,e);}
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
@@ -860,17 +849,7 @@ function Dashboard(){
     }
     console.log('=== FETCH SUMMARY ===',debugLog.join(' | '));
     console.log('=== MONTHS WITH DATA ===',Object.keys(results));
-    // Also fetch Practice Performance sheet for Starts + RG data
-    setLoadMsg("Loading Practice Performance...");
-    for(const {key,tab} of SHEET_TABS){
-      if(!results[key])continue;// only fetch PP for months with outcomes data
-      try{
-        const pp=await fetchPracticePerf(tab);
-        if(pp)ppResults[key]=pp;
-        console.log(`PP ${key}:`,pp);
-      }catch(e){}
-    }
-    setPpData(ppResults);
+
     setAllData(results);setLastRefresh(new Date());setLoading(false);
     const loaded=MONTH_KEYS.filter(m=>results[m]);
     if(loaded.length){const cur=loaded.includes(CURRENT_MONTH)?CURRENT_MONTH:loaded[loaded.length-1];setMonth(cur);}
@@ -921,7 +900,7 @@ function Dashboard(){
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
-          h(StartsCard,{month,d,ppData,allFin,savePending}),
+          h(StartsCard,{month,d,allFin,savePending}),
           h(RGCard,{month,allFin,savePending}),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
           h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true})
