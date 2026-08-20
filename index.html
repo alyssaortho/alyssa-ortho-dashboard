@@ -324,6 +324,35 @@ const {useState,useEffect,useCallback,createElement:h,Fragment}=React;
 const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,ReferenceLine,PieChart,Pie,Cell}=Recharts;
 
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
+const PP_SHEET_ID="1pGmvyfGIB7tz-g_PRYwpCmfbV32-Ktz1ehR5CVbkP78";
+// Fetch Practice Performance sheet: count rows where Col M >= 2980 (Starts)
+// and Col K = TRUE or non-zero (RG provided)
+function fetchPracticePerf(tabName){
+  // Select columns K (RG) and M (production amount)
+  const url=`https://docs.google.com/spreadsheets/d/${PP_SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+K,M&sheet=${encodeURIComponent(tabName)}`;
+  return fetch(url)
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.split("\n").filter(l=>l.trim());
+      let starts=0,rg=0;
+      for(let i=1;i<lines.length;i++){// skip header
+        const parts=[];let c="",inQ=false;
+        for(let j=0;j<lines[i].length;j++){
+          const ch=lines[i][j];
+          if(ch==='"'){if(inQ&&lines[i][j+1]==='"'){c+='"';j++;}else inQ=!inQ;}
+          else if(ch===","&&!inQ){parts.push(c);c="";}
+          else c+=ch;
+        }
+        parts.push(c);
+        const kVal=(parts[0]||"").trim().replace(/^"|"$/g,"").toLowerCase();
+        const mVal=parseFloat((parts[1]||"").trim().replace(/[$,"]/g,""));
+        if(!isNaN(mVal)&&mVal>=2980)starts++;
+        if(kVal==="true"||kVal==="1"||(parseFloat(kVal)>0&&kVal!=="-"&&kVal!==""))rg++;
+      }
+      return {starts,rg};
+    })
+    .catch(e=>{console.error("fetchPracticePerf error:",e);return null;});
+}
 const SHEET_TABS=[
   {key:"January",tab:"Jan '26",hasBonham:false},
   {key:"February",tab:"Feb '26",hasBonham:false},
@@ -577,18 +606,17 @@ const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{i
 const FIN_PIN="9855";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
-function FinancialTab({month}){
+function FinancialTab({month,allFin,setAllFin}){
   const [pin,setPin]=useState("");
   const [unlocked,setUnlocked]=useState(false);
   const [pinErr,setPinErr]=useState(false);
   const [editing,setEditing]=useState(false);
-  const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
   const [form,setForm]=useState(EMPTY_FIN());
   const RG_PRICE=880,MIN_PROD=2980;
   const save=()=>{
     const updated={...allFin,[month]:{...form,savedAt:new Date().toISOString()}};
     setAllFin(updated);
-    try{localStorage.setItem(FIN_STORAGE_KEY,JSON.stringify(updated));}catch(e){}
+    try{localStorage.setItem(FIN_STORAGE_KEY,JSON.stringify(updated));}catch(e){console.warn("localStorage unavailable");}
     setEditing(false);
   };
   const startEdit=()=>{setForm(allFin[month]?{...allFin[month]}:EMPTY_FIN());setEditing(true);};
@@ -694,10 +722,13 @@ function Dashboard(){
   const [loadMsg,setLoadMsg]=useState("Connecting to Google Sheet…");
   const [lastRefresh,setLastRefresh]=useState(null);
   const [error,setError]=useState(null);
+  const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
+  const [ppData,setPpData]=useState({});
 
   const loadAll=useCallback(async()=>{
     setLoading(true);setError(null);
     const results={};
+    const ppResults={};
     let count=0;
     const debugLog=[];
     for(const {key,tab,hasBonham} of SHEET_TABS){
@@ -722,6 +753,17 @@ function Dashboard(){
     }
     console.log('=== FETCH SUMMARY ===',debugLog.join(' | '));
     console.log('=== MONTHS WITH DATA ===',Object.keys(results));
+    // Also fetch Practice Performance sheet for Starts + RG data
+    setLoadMsg("Loading Practice Performance...");
+    for(const {key,tab} of SHEET_TABS){
+      if(!results[key])continue;// only fetch PP for months with outcomes data
+      try{
+        const pp=await fetchPracticePerf(tab);
+        if(pp)ppResults[key]=pp;
+        console.log(`PP ${key}:`,pp);
+      }catch(e){}
+    }
+    setPpData(ppResults);
     setAllData(results);setLastRefresh(new Date());setLoading(false);
     const loaded=MONTH_KEYS.filter(m=>results[m]);
     if(loaded.length)setMonth(loaded[loaded.length-1]);
@@ -749,7 +791,7 @@ function Dashboard(){
       )
     ),
     h('div',{style:{background:C.royal,display:"flex",overflowX:"auto",padding:"0 28px",borderBottom:"1px solid #001a4d"}},
-      MONTH_KEYS.map(m=>{const active=m===month,hasD=!!allData[m];return h('button',{key:m,onClick:()=>setMonth(m),style:{padding:"12px 16px",background:"none",border:"none",color:active?C.white:hasD?"#a0bddf":"#3a5a90",borderBottom:active?`3px solid ${C.orange}`:"3px solid transparent",fontSize:12,fontWeight:active?800:400,fontFamily:F,whiteSpace:"nowrap",letterSpacing:"0.06em"}},m.slice(0,3).toUpperCase());})
+      MONTH_KEYS.filter(m=>!!allData[m]).map(m=>{const active=m===month;return h('button',{key:m,onClick:()=>setMonth(m),style:{padding:"12px 16px",background:"none",border:"none",color:active?C.white:"#a0bddf",borderBottom:active?`3px solid ${C.orange}`:"3px solid transparent",fontSize:12,fontWeight:active?800:400,fontFamily:F,whiteSpace:"nowrap",letterSpacing:"0.06em"}},m.slice(0,3).toUpperCase());})
     ),
     h('div',{style:{background:C.panelAlt,borderBottom:`2px solid ${C.border}`,display:"flex",padding:"0 36px",overflowX:"auto"}},
       SECTIONS.map(sec=>h("button",{key:sec.id,onClick:function(){setSection(sec.id);},style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?(sec.locked?C.green:C.royal):C.muted,borderBottom:section===sec.id?"3px solid "+(sec.locked?C.green:C.orange):"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.locked?"🔒 Financial":sec.label))
@@ -774,22 +816,25 @@ function Dashboard(){
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Starts"),
-            h('p',{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},d.totalRec??"--"),
+            h('p',{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},ppData[month]?.starts??d.totalRec??"--"),
             h('div',{style:{marginTop:8,display:"flex",flexDirection:"column",gap:3}},
               h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"SDS: "+(d.totalSameDay??0)),
               h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"EOM Converted: "+(d.eomConverted??0)),
               h('div',{style:{height:1,background:C.border,margin:"4px 0"}}),
-              h('p',{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+((d.totalSameDay??0)+(d.eomConverted??0)))
+              h('p',{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+((d.totalSameDay??0)+(d.eomConverted??0))),
+              ppData[month]?.starts&&h('p',{style:{color:C.muted,fontSize:10,margin:"2px 0 0",fontFamily:F}},"From Practice Performance (≥$2,980)")
             )
           ),
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG Provided"),
             h('p',{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},
-              (()=>{try{const s=localStorage.getItem("ao_fin_2026");if(s){const fin=JSON.parse(s);const mo=fin[month];if(mo&&mo.rgCount)return parseInt(mo.rgCount)||"--";}return "--";}catch(e){return "--";}})()
+              ppData[month]?.rg??((allFin[month]?.rgCount&&parseInt(allFin[month].rgCount)>0)?parseInt(allFin[month].rgCount):"--")
             ),
             h('div',{style:{marginTop:8,display:"flex",flexDirection:"column",gap:3}},
               h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"$880 per RG"),
-              h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"Enter in Financial tab")
+              ppData[month]?.rg!=null
+                ?h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"From Practice Performance (Col K=TRUE)")
+                :h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"Enter in Financial tab as backup")
             )
           ),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
@@ -903,7 +948,7 @@ function Dashboard(){
           )
         )
       ),
-      section==="financial"&&h(FinancialTab,{month:month}),
+      section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
