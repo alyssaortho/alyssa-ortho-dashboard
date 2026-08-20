@@ -370,25 +370,19 @@ function parseCSV(text){
 
 // Fetch Google Sheet data via CSV export (works from GitHub Pages, no CORS issues)
 function fetchCellValue(tabName,row,col){
-  // Use JSONP to fetch a specific cell - avoids CORS/redirect issues
-  return new Promise((resolve)=>{
-    const colLetter=String.fromCharCode(64+col);
-    const tq=encodeURIComponent(`select ${colLetter} limit 1 offset ${row-1}`);
-    const cbName='cellcb_'+Math.random().toString(36).slice(2);
-    const script=document.createElement('script');
-    let done=false;
-    window[cbName]=(data)=>{
-      done=true;delete window[cbName];script.remove();
-      try{
-        const v=data.table.rows[0]?.c[0]?.v;
-        resolve(v!=null?String(v):null);
-      }catch(e){resolve(null);}
-    };
-    script.onerror=()=>{done=true;delete window[cbName];script.remove();resolve(null);};
-    setTimeout(()=>{if(!done){delete window[cbName];script.remove();resolve(null);}},6000);
-    script.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=${tq}&sheet=${encodeURIComponent(tabName)}&callback=${cbName}`;
-    document.head.appendChild(script);
-  });
+  // Fetch a specific cell via CSV export - works from GitHub Pages (no CORS on public sheets)
+  const colLetter=String.fromCharCode(64+col);
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+${colLetter}+limit+1+offset+${row-1}&sheet=${encodeURIComponent(tabName)}`;
+  return fetch(url,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.trim().split("\n").filter(l=>l.trim());
+      // skip header row (Label), get first data row
+      const dataLine=lines.find(l=>!l.toLowerCase().includes('"label"'))||lines[lines.length-1]||"";
+      const val=dataLine.trim().replace(/^"|"$/g,"");
+      return val||null;
+    })
+    .catch(()=>null);
 }
 function fetchSheet(tabName){
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+N,O&sheet=${encodeURIComponent(tabName)}`;
@@ -579,7 +573,12 @@ function MetricTile({label,value,goal}){
 }
 function GoalBar({data,title,height=240}){
   const goalVal=data.find(d=>d.goal!=null)?.goal??null;
-  const CB=(props)=>{const{x,y,width,height:ht,value,goal}=props;return h('rect',{x,y,width,height:Math.max(ht||0,2),fill:(!value||value===0)?C.border:accent(value,goal),rx:3});};
+  const CB=(props)=>{const{x,y,width,height:ht,value,goal}=props;
+    const isZero=value===0;
+    return h('g',null,
+      h('rect',{x,y:isZero?y-16:y,width,height:Math.max(ht||0,isZero?16:2),fill:isZero?C.border:accent(value,goal),rx:3}),
+      isZero&&h('text',{x:x+width/2,y:y-2,textAnchor:"middle",fill:C.muted,fontSize:10,fontFamily:F},"0%")
+    );};
   const CT=({active,payload})=>{if(!active||!payload?.length)return null;const item=payload[0].payload;return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",fontFamily:F,fontSize:12}},h('p',{style:{color:C.text,fontWeight:700,margin:"0 0 4px"}},item.label),item.value?h('p',{style:{color:accent(item.value,item.goal),margin:0,fontWeight:700}},`${item.value}%`):h('p',{style:{color:C.muted,margin:0}},"No data"));};
   return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 16px 8px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
     h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 12px",fontFamily:F}},title),
@@ -932,6 +931,14 @@ function Dashboard(){
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
           h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
+        ),
+        h('div',{style:{marginTop:8}},
+          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
+          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
+            h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
+            h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+            h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
+          )
         )
       ),
       section==="tc"&&h('div',null,
@@ -959,7 +966,7 @@ function Dashboard(){
             h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
-            d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:46,fontWeight:900,margin:"0 0 6px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:12,margin:"0 0 12px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:4,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
+            d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
           )
         )):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
       ),
@@ -1462,25 +1469,19 @@ function parseCSV(text){
 
 // Fetch Google Sheet data via CSV export (works from GitHub Pages, no CORS issues)
 function fetchCellValue(tabName,row,col){
-  // Use JSONP to fetch a specific cell - avoids CORS/redirect issues
-  return new Promise((resolve)=>{
-    const colLetter=String.fromCharCode(64+col);
-    const tq=encodeURIComponent(`select ${colLetter} limit 1 offset ${row-1}`);
-    const cbName='cellcb_'+Math.random().toString(36).slice(2);
-    const script=document.createElement('script');
-    let done=false;
-    window[cbName]=(data)=>{
-      done=true;delete window[cbName];script.remove();
-      try{
-        const v=data.table.rows[0]?.c[0]?.v;
-        resolve(v!=null?String(v):null);
-      }catch(e){resolve(null);}
-    };
-    script.onerror=()=>{done=true;delete window[cbName];script.remove();resolve(null);};
-    setTimeout(()=>{if(!done){delete window[cbName];script.remove();resolve(null);}},6000);
-    script.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=${tq}&sheet=${encodeURIComponent(tabName)}&callback=${cbName}`;
-    document.head.appendChild(script);
-  });
+  // Fetch a specific cell via CSV export - works from GitHub Pages (no CORS on public sheets)
+  const colLetter=String.fromCharCode(64+col);
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+${colLetter}+limit+1+offset+${row-1}&sheet=${encodeURIComponent(tabName)}`;
+  return fetch(url,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.trim().split("\n").filter(l=>l.trim());
+      // skip header row (Label), get first data row
+      const dataLine=lines.find(l=>!l.toLowerCase().includes('"label"'))||lines[lines.length-1]||"";
+      const val=dataLine.trim().replace(/^"|"$/g,"");
+      return val||null;
+    })
+    .catch(()=>null);
 }
 function fetchSheet(tabName){
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+N,O&sheet=${encodeURIComponent(tabName)}`;
@@ -1671,7 +1672,12 @@ function MetricTile({label,value,goal}){
 }
 function GoalBar({data,title,height=240}){
   const goalVal=data.find(d=>d.goal!=null)?.goal??null;
-  const CB=(props)=>{const{x,y,width,height:ht,value,goal}=props;return h('rect',{x,y,width,height:Math.max(ht||0,2),fill:(!value||value===0)?C.border:accent(value,goal),rx:3});};
+  const CB=(props)=>{const{x,y,width,height:ht,value,goal}=props;
+    const isZero=value===0;
+    return h('g',null,
+      h('rect',{x,y:isZero?y-16:y,width,height:Math.max(ht||0,isZero?16:2),fill:isZero?C.border:accent(value,goal),rx:3}),
+      isZero&&h('text',{x:x+width/2,y:y-2,textAnchor:"middle",fill:C.muted,fontSize:10,fontFamily:F},"0%")
+    );};
   const CT=({active,payload})=>{if(!active||!payload?.length)return null;const item=payload[0].payload;return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",fontFamily:F,fontSize:12}},h('p',{style:{color:C.text,fontWeight:700,margin:"0 0 4px"}},item.label),item.value?h('p',{style:{color:accent(item.value,item.goal),margin:0,fontWeight:700}},`${item.value}%`):h('p',{style:{color:C.muted,margin:0}},"No data"));};
   return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 16px 8px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
     h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 12px",fontFamily:F}},title),
@@ -2024,6 +2030,14 @@ function Dashboard(){
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
           h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
+        ),
+        h('div',{style:{marginTop:8}},
+          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
+          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
+            h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
+            h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+            h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
+          )
         )
       ),
       section==="tc"&&h('div',null,
@@ -2051,7 +2065,7 @@ function Dashboard(){
             h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
-            d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:46,fontWeight:900,margin:"0 0 6px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:12,margin:"0 0 12px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:4,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
+            d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
           )
         )):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
       ),
