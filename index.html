@@ -354,20 +354,22 @@ function fetchPracticePerf(tabName){
     .catch(e=>{console.error("fetchPracticePerf error:",e);return null;});
 }
 const SHEET_TABS=[
-  {key:"January",tab:"Jan '26",hasBonham:false},
-  {key:"February",tab:"Feb '26",hasBonham:false},
-  {key:"March",tab:"March '26",hasBonham:false},
-  {key:"April",tab:"April '26",hasBonham:false},
-  {key:"May",tab:"May '26",hasBonham:true},
-  {key:"June",tab:"Jun '26",hasBonham:true},
-  {key:"July",tab:"Jul '26",hasBonham:true},
-  {key:"August",tab:"Aug '26",hasBonham:true},
-  {key:"September",tab:"Sep '26",hasBonham:true},
-  {key:"October",tab:"Oct '26",hasBonham:true},
-  {key:"November",tab:"Nov '26",hasBonham:true},
-  {key:"December",tab:"Dec '26",hasBonham:true},
+  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7},
+  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7},
+  {key:"March",tab:"March '26",hasBonham:false,examRow:8},
+  {key:"April",tab:"April '26",hasBonham:false,examRow:8},
+  {key:"May",tab:"May '26",hasBonham:true,examRow:8},
+  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8},
+  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8},
+  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8},
+  {key:"September",tab:"Sep '26",hasBonham:true,examRow:8},
+  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8},
+  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8},
+  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8},
 ];
 const MONTH_KEYS=SHEET_TABS.map(s=>s.key);
+// Auto-detect current month for default tab
+const CURRENT_MONTH=(()=>{const mo=new Date().getMonth();return ["January","February","March","April","May","June","July","August","September","October","November","December"][mo];})();
 const C={bg:"#EDF2F7",panel:"#FFFFFF",panelAlt:"#F0F4F9",border:"#C9D6E3",royal:"#003087",blue:"#1a5fba",orange:"#E05A00",silver:"#718096",white:"#FFFFFF",teal:"#00BCD4",green:"#1a9e7a",text:"#1A202C",subtext:"#2D3748",muted:"#718096",purple:"#9B27AF"};
 const F="'Trebuchet MS','Century Gothic',sans-serif";
 
@@ -395,6 +397,16 @@ function parseCSV(text){
 }
 
 // Fetch Google Sheet data via CSV export (works from GitHub Pages, no CORS issues)
+function fetchCellValue(tabName,row,col){
+  // Fetch a specific cell by row/col number (1-indexed)
+  const colLetter=String.fromCharCode(64+col);
+  const cellRef=colLetter+row;
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+${colLetter}&sheet=${encodeURIComponent(tabName)}&range=${cellRef}`;
+  return fetch(url).then(r=>r.text()).then(csv=>{
+    const val=csv.split("\n")[1]||"";
+    return val.trim().replace(/^"|"$/g,"");
+  }).catch(()=>null);
+}
 function fetchSheet(tabName){
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+N,O&sheet=${encodeURIComponent(tabName)}`;
   return fetch(url)
@@ -640,43 +652,47 @@ function RGCard({month,allFin,savePending}){
     )
   );
 }
+function InlineEntry({label,value,onSave,color}){
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(String(value||""));
+  const commit=()=>{onSave(draft);setEditing(false);};
+  return h("div",{style:{display:"flex",alignItems:"center",gap:6,margin:"2px 0"}},
+    h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},label+": "),
+    editing
+      ?h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+          h("input",{type:"number",min:"0",value:draft,
+            onChange:function(e){setDraft(e.target.value);},
+            onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+            autoFocus:true,
+            style:{width:56,padding:"2px 6px",fontSize:12,border:"1px solid "+C.border,borderRadius:5,fontFamily:F,background:C.panelAlt,color:C.text,outline:"none"}}),
+          h("button",{onClick:commit,style:{fontSize:10,padding:"2px 8px",background:C.royal,color:C.white,border:"none",borderRadius:4,cursor:"pointer",fontFamily:F}},"Save"),
+          h("button",{onClick:function(){setEditing(false);},style:{fontSize:10,padding:"2px 6px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:4,cursor:"pointer",fontFamily:F}},"✕")
+        )
+      :h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+          h("span",{style:{color:value>0?(color||C.text):C.muted,fontSize:11,fontFamily:F}},value>0?value:"--"),
+          h("button",{onClick:function(){setDraft(String(value||""));setEditing(true);},
+            style:{fontSize:9,padding:"2px 7px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:4,cursor:"pointer",fontFamily:F}},
+            value>0?"edit":"+ add")
+        )
+  );
+}
 function StartsCard({month,d,ppData,allFin,savePending}){
-  const thisMonthStarts=ppData[month]?.starts??d.totalRec??0;
-  const pendingStarts=parseInt(allFin[month]?.pendingStarts||0)||0;
   const sds=d.totalSameDay??0;
   const eom=d.eomConverted??0;
-  const totalStarts=sds+eom+pendingStarts;
-  const [editing,setEditing]=useState(false);
-  const [draft,setDraft]=useState(String(pendingStarts||""));
-  const commit=()=>{savePending(month,draft);setEditing(false);};
+  const pendingStarts=parseInt(allFin[month]?.pendingStarts||0)||0;
+  const deductions=parseInt(allFin[month]?.deductions||0)||0;
+  const totalStarts=sds+eom+pendingStarts-deductions;
   return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
     h("p",{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Starts"),
-    h("p",{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},totalStarts||"--"),
-    h("div",{style:{marginTop:8,display:"flex",flexDirection:"column",gap:4}},
+    h("p",{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},totalStarts>=0?totalStarts:"--"),
+    h("div",{style:{marginTop:8,display:"flex",flexDirection:"column",gap:2}},
       h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"SDS: "+sds),
       h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"EOM Converted: "+eom),
-      h("div",{style:{display:"flex",alignItems:"center",gap:6,margin:"2px 0"}},
-        h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"Pending: "),
-        editing
-          ?h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-              h("input",{type:"number",min:"0",value:draft,
-                onChange:function(e){setDraft(e.target.value);},
-                onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
-                autoFocus:true,
-                style:{width:56,padding:"2px 6px",fontSize:12,border:"1px solid "+C.border,borderRadius:5,fontFamily:F,background:C.panelAlt,color:C.text,outline:"none"}}),
-              h("button",{onClick:commit,style:{fontSize:10,padding:"2px 8px",background:C.royal,color:C.white,border:"none",borderRadius:4,cursor:"pointer",fontFamily:F}},"Save"),
-              h("button",{onClick:function(){setEditing(false);},style:{fontSize:10,padding:"2px 6px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:4,cursor:"pointer",fontFamily:F}},"✕")
-            )
-          :h("div",{style:{display:"flex",alignItems:"center",gap:6}},
-              h("span",{style:{color:pendingStarts>0?C.text:C.muted,fontSize:11,fontFamily:F}},pendingStarts>0?pendingStarts:"--"),
-              h("button",{onClick:function(){setDraft(String(pendingStarts||""));setEditing(true);},
-                style:{fontSize:9,padding:"2px 7px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:4,cursor:"pointer",fontFamily:F,letterSpacing:"0.04em"}},
-                pendingStarts>0?"edit":"+ add")
-            )
-      ),
+      h(InlineEntry,{label:"Pending (prev mo)",value:pendingStarts,color:C.blue,onSave:function(v){savePending(month,v);}}),
+      h(InlineEntry,{label:"Deducted (<$2,980)",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});}}),
       h("div",{style:{height:1,background:C.border,margin:"4px 0"}}),
       h("p",{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+totalStarts),
-      h("p",{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"SDS + EOM + Pending from prev month")
+      h("p",{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"SDS + EOM + Pending − Deductions")
     )
   );
 }
@@ -793,7 +809,7 @@ function FinancialTab({month,allFin,setAllFin}){
 function SH({label,color,month}){return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},h('div',{style:{width:4,height:28,background:color,borderRadius:4}}),h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`));}
 
 function Dashboard(){
-  const [month,setMonth]=useState("May");
+  const [month,setMonth]=useState(CURRENT_MONTH);
   const [section,setSection]=useState("overview");
   const [allData,setAllData]=useState({});
   const [loading,setLoading]=useState(true);
@@ -816,18 +832,24 @@ function Dashboard(){
     const ppResults={};
     let count=0;
     const debugLog=[];
-    for(const {key,tab,hasBonham} of SHEET_TABS){
+    for(const {key,tab,hasBonham,examRow} of SHEET_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
         const data=await fetchSheet(tab);
         const rowCount=data?data.length:0;
-        console.log(`fetchSheet(${tab}):`,rowCount,'rows');
         if(data&&data.length>5){
           const parsed=extractMonthData(data,hasBonham);
-          // Only accept month if it has at least one real metric (prevents phantom Sept-Dec data)
+          // Fetch exam show rate directly from cell O7 (Jan/Feb) or O8 (Mar+)
+          try{
+            const examCell=await fetchCellValue(tab,examRow,15);
+            if(examCell&&examCell.includes("%")){
+              parsed.examKeptAll=parseFloat(examCell.replace("%","").trim())||null;
+              console.log(`${key} examKeptAll from O${examRow}:`,parsed.examKeptAll);
+            }
+          }catch(e){console.warn(`${key} cell fetch failed:`,e);}
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
-          if(hasRealData){results[key]=parsed;console.log(`${key}: valid data loaded`);}
-          else{console.warn(`${key}: rows found but no real metrics - skipping (tab may be empty)`);}
+          if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
+          else{console.warn(`${key}: no real metrics - skipping`);}
         }else{
           console.warn(`${key}: skipped - only ${rowCount} rows`);
         }
@@ -851,7 +873,7 @@ function Dashboard(){
     setPpData(ppResults);
     setAllData(results);setLastRefresh(new Date());setLoading(false);
     const loaded=MONTH_KEYS.filter(m=>results[m]);
-    if(loaded.length)setMonth(loaded[loaded.length-1]);
+    if(loaded.length){const cur=loaded.includes(CURRENT_MONTH)?CURRENT_MONTH:loaded[loaded.length-1];setMonth(cur);}
     else setError("Could not load data. Check your internet connection and make sure the Google Sheet is shared publicly.");
   },[]);
 
@@ -949,15 +971,60 @@ function Dashboard(){
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month}),
-        h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${C.blue}`,borderRadius:10,padding:"22px 28px",marginBottom:20,display:"flex",alignItems:"center",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h('div',{style:{minWidth:160}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"TOTAL NEW EXAMS"),h('p',{style:{color:C.blue,fontSize:58,fontWeight:900,margin:0,fontFamily:F}},d.totalNewExams??"—")),
-          h('div',{style:{width:1,background:C.border,alignSelf:"stretch",margin:"0 28px"}}),
-          h('div',{style:{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"14px",border:`1px solid ${C.border}`}},h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"New Exam Kept"),h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?`${d.newExamKeptAll}%`:"—")),
-            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"14px",border:`1px solid ${C.border}`}},h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"OBS Kept"),h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?`${d.obsKeptAll}%`:"—"))
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"NEW EXAMS"),
+            h('p',{style:{color:C.blue,fontSize:48,fontWeight:900,margin:"0 0 10px",fontFamily:F}},d.totalNewExams??"--"),
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
+                h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--")
+              ),
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched"),
+                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--")
+              )
+            ),
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
+                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??d.totalNotKeptAll??"--")
+              ),
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newRescheduled??d.totalRescheduledAll??"--")
+              )
+            )
+          ),
+          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"OBS / RR / P2"),
+            h('p',{style:{color:C.teal,fontSize:48,fontWeight:900,margin:"0 0 10px",fontFamily:F}},d.totalObsCompleted??"--"),
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
+                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--")
+              ),
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Goal"),
+                h('p',{style:{color:C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},"85%")
+              )
+            ),
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
+                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--")
+              ),
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsRescheduled??"--")
+              )
+            )
           )
         ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
+          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
+        ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
           h(KpiCard,{label:"New Exam Kept — All",value:d.newExamKeptAll,goal:85}),
           h('div',{style:{display:"flex",flexDirection:"column",gap:8}},
@@ -978,40 +1045,8 @@ function Dashboard(){
           h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
           h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
-        ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
-          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"NEW EXAM — NOT KEPT & RESCHEDULED"),
-            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"12px 16px"}},
-                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Not Kept"),
-                h('p',{style:{color:C.orange,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.newNotKeptAll??d.newNotKept??d.totalNotKeptAll??"--"),
-                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Did not show / cancelled")
-              ),
-              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal,borderRadius:8,padding:"12px 16px"}},
-                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Rescheduled Same Month"),
-                h('p',{style:{color:C.teal,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.newRescheduled??d.totalRescheduledAll??"--"),
-                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Column G → Rescheduled")
-              )
-            )
-          ),
-          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"OBS / RR / P2 — NOT KEPT & RESCHEDULED"),
-            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"12px 16px"}},
-                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Not Kept"),
-                h('p',{style:{color:C.orange,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
-                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Did not show / cancelled")
-              ),
-              h('div',{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal,borderRadius:8,padding:"12px 16px"}},
-                h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},"Rescheduled Same Month"),
-                h('p',{style:{color:C.teal,fontSize:32,fontWeight:900,margin:0,fontFamily:F}},d.obsRescheduled??"--"),
-                h('p',{style:{color:C.muted,fontSize:10,margin:"4px 0 0",fontFamily:F}},"Column G → Rescheduled")
-              )
-            )
-          )
         )
-      ),
+            ),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
