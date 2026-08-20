@@ -835,18 +835,26 @@ function Dashboard(){
           // Fetch exam show rate directly from cell O7 (Jan/Feb) or O8 (Mar+)
           try{
             const examCell=await fetchCellValue(tab,examRow,15);
-            console.log(`${key} raw cell O${examRow}:`,examCell);
             if(examCell!=null){
-              // Value may come as decimal (0.7638) or percent string (76.38%)
               let v=parseFloat(String(examCell).replace("%","").trim());
               if(!isNaN(v)){
-                // If value is between 0 and 1, it's a decimal - multiply by 100
                 if(v>0&&v<=1)v=Math.round(v*10000)/100;
                 parsed.examKeptAll=Math.round(v*100)/100;
-                console.log(`${key} examKeptAll:`,parsed.examKeptAll);
               }
             }
-          }catch(e){console.warn(`${key} cell fetch failed:`,e);}
+          }catch(e){console.warn(`${key} examKeptAll cell fetch failed:`,e);}
+          // OBS not kept: sum O27 (Denison) + O35 (Gainesville) + O43 (Bonham if applicable)
+          try{
+            const [c27,c35,c43]=await Promise.all([
+              fetchCellValue(tab,27,15),
+              fetchCellValue(tab,35,15),
+              hasBonham?fetchCellValue(tab,43,15):Promise.resolve(null)
+            ]);
+            const toN=v=>{if(v==null||String(v).trim()==="-"||String(v).trim()==="")return 0;const n=parseInt(String(v).replace(/[^0-9]/g,""));return isNaN(n)?0:n;};
+            const total=toN(c27)+toN(c35)+toN(c43);
+            parsed.obsNotKept=total>0?total:null;
+            console.log(`${key} obsNotKept: O27=${c27} O35=${c35} O43=${c43} => ${total}`);
+          }catch(e){console.warn(`${key} obsNotKept fetch failed:`,e);}
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
           if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
           else{console.warn(`${key}: no real metrics - skipping`);}
@@ -1005,9 +1013,14 @@ function Dashboard(){
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
-              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,gridColumn:"1 / -1"}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept + Rescheduled"),
-                h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"Not tracked separately in sheet — see New Exams totals above")
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
+                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"O27+O35+O43")
+              ),
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
               )
             )
           )
@@ -1919,18 +1932,26 @@ function Dashboard(){
           // Fetch exam show rate directly from cell O7 (Jan/Feb) or O8 (Mar+)
           try{
             const examCell=await fetchCellValue(tab,examRow,15);
-            console.log(`${key} raw cell O${examRow}:`,examCell);
             if(examCell!=null){
-              // Value may come as decimal (0.7638) or percent string (76.38%)
               let v=parseFloat(String(examCell).replace("%","").trim());
               if(!isNaN(v)){
-                // If value is between 0 and 1, it's a decimal - multiply by 100
                 if(v>0&&v<=1)v=Math.round(v*10000)/100;
                 parsed.examKeptAll=Math.round(v*100)/100;
-                console.log(`${key} examKeptAll:`,parsed.examKeptAll);
               }
             }
-          }catch(e){console.warn(`${key} cell fetch failed:`,e);}
+          }catch(e){console.warn(`${key} examKeptAll cell fetch failed:`,e);}
+          // OBS not kept: sum O27 (Denison) + O35 (Gainesville) + O43 (Bonham if applicable)
+          try{
+            const [c27,c35,c43]=await Promise.all([
+              fetchCellValue(tab,27,15),
+              fetchCellValue(tab,35,15),
+              hasBonham?fetchCellValue(tab,43,15):Promise.resolve(null)
+            ]);
+            const toN=v=>{if(v==null||String(v).trim()==="-"||String(v).trim()==="")return 0;const n=parseInt(String(v).replace(/[^0-9]/g,""));return isNaN(n)?0:n;};
+            const total=toN(c27)+toN(c35)+toN(c43);
+            parsed.obsNotKept=total>0?total:null;
+            console.log(`${key} obsNotKept: O27=${c27} O35=${c35} O43=${c43} => ${total}`);
+          }catch(e){console.warn(`${key} obsNotKept fetch failed:`,e);}
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
           if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
           else{console.warn(`${key}: no real metrics - skipping`);}
@@ -2089,9 +2110,14 @@ function Dashboard(){
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
-              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,gridColumn:"1 / -1"}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept + Rescheduled"),
-                h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"Not tracked separately in sheet — see New Exams totals above")
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
+                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"O27+O35+O43")
+              ),
+              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
               )
             )
           )
