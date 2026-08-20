@@ -538,9 +538,15 @@ function extractMonthData(labelList,hasBonham){
     // Labels confirmed from sheet scan:
     newNotKept:num(get("Total Number of New Exams Not Kept")),
     totalRescheduledAll:num(get("Total Exams (All) Rescheduled")),
-    // OBS not kept & per-type rescheduled are not separate rows in sheet
     newRescheduled:null,
-    obsNotKept:null,
+    // OBS not kept = sum of all three OBS sub-types
+    obsNotKept:(()=>{
+      const obs=num(get("Total Number of Observation Not Kept"))||0;
+      const rr=num(get("Total Number of Recall Ready Not Kept"))||0;
+      const p2=num(get("Total Number of Phase 2 Not Kept"))||0;
+      const total=obs+rr+p2;
+      return total>0?total:null;
+    })(),
     obsRescheduled:null,
     totalNotKeptAll:null,
     totalRec:num(get("Total Treatment Recommended from All Exam Types  (NP/OBS/RR/2 + All TCs)")),
@@ -843,18 +849,7 @@ function Dashboard(){
               }
             }
           }catch(e){console.warn(`${key} examKeptAll cell fetch failed:`,e);}
-          // OBS not kept: sum O27 (Denison) + O35 (Gainesville) + O43 (Bonham if applicable)
-          try{
-            const [c27,c35,c43]=await Promise.all([
-              fetchCellValue(tab,27,15),
-              fetchCellValue(tab,35,15),
-              hasBonham?fetchCellValue(tab,43,15):Promise.resolve(null)
-            ]);
-            const toN=v=>{if(v==null||String(v).trim()==="-"||String(v).trim()==="")return 0;const n=parseInt(String(v).replace(/[^0-9]/g,""));return isNaN(n)?0:n;};
-            const total=toN(c27)+toN(c35)+toN(c43);
-            parsed.obsNotKept=total>0?total:null;
-            console.log(`${key} obsNotKept: O27=${c27} O35=${c35} O43=${c43} => ${total}`);
-          }catch(e){console.warn(`${key} obsNotKept fetch failed:`,e);}
+
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
           if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
           else{console.warn(`${key}: no real metrics - skipping`);}
@@ -1016,7 +1011,7 @@ function Dashboard(){
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"O27+O35+O43")
+
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
@@ -1635,9 +1630,15 @@ function extractMonthData(labelList,hasBonham){
     // Labels confirmed from sheet scan:
     newNotKept:num(get("Total Number of New Exams Not Kept")),
     totalRescheduledAll:num(get("Total Exams (All) Rescheduled")),
-    // OBS not kept & per-type rescheduled are not separate rows in sheet
     newRescheduled:null,
-    obsNotKept:null,
+    // OBS not kept = sum of all three OBS sub-types
+    obsNotKept:(()=>{
+      const obs=num(get("Total Number of Observation Not Kept"))||0;
+      const rr=num(get("Total Number of Recall Ready Not Kept"))||0;
+      const p2=num(get("Total Number of Phase 2 Not Kept"))||0;
+      const total=obs+rr+p2;
+      return total>0?total:null;
+    })(),
     obsRescheduled:null,
     totalNotKeptAll:null,
     totalRec:num(get("Total Treatment Recommended from All Exam Types  (NP/OBS/RR/2 + All TCs)")),
@@ -1940,18 +1941,7 @@ function Dashboard(){
               }
             }
           }catch(e){console.warn(`${key} examKeptAll cell fetch failed:`,e);}
-          // OBS not kept: sum O27 (Denison) + O35 (Gainesville) + O43 (Bonham if applicable)
-          try{
-            const [c27,c35,c43]=await Promise.all([
-              fetchCellValue(tab,27,15),
-              fetchCellValue(tab,35,15),
-              hasBonham?fetchCellValue(tab,43,15):Promise.resolve(null)
-            ]);
-            const toN=v=>{if(v==null||String(v).trim()==="-"||String(v).trim()==="")return 0;const n=parseInt(String(v).replace(/[^0-9]/g,""));return isNaN(n)?0:n;};
-            const total=toN(c27)+toN(c35)+toN(c43);
-            parsed.obsNotKept=total>0?total:null;
-            console.log(`${key} obsNotKept: O27=${c27} O35=${c35} O43=${c43} => ${total}`);
-          }catch(e){console.warn(`${key} obsNotKept fetch failed:`,e);}
+
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
           if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
           else{console.warn(`${key}: no real metrics - skipping`);}
@@ -2113,7 +2103,7 @@ function Dashboard(){
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"O27+O35+O43")
+
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
