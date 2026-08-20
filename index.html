@@ -479,9 +479,18 @@ function extractMonthData(labelList,hasBonham){
       else if(lbl.includes("patients converted by eom"))eom=num(val)||0;
     }
     if(rec!==null||started!==null){
-      tcSds.push({tc:name,label:short,value:sdsVal??0,goal:50});
-      tcTrc.push({tc:name,label:short,value:trcVal??0,goal:70});
-      tcTable.push({name,short,rec:rec??0,started:started??0,sds:sdsVal!=null?`${sdsVal.toFixed(1)}%`:"—",eom,trc:trcVal??0});
+      // If TC has recs/starts but null conversion, treat as 0% (not no-data)
+      // Only skip if rec===null AND started===null (truly no activity like Ana)
+      const hasSomeActivity=(rec!==null&&rec>0)||(started!==null&&started>0);
+      const sdsDisplay=hasSomeActivity?(sdsVal!==null?sdsVal:0):sdsVal;
+      const trcDisplay=hasSomeActivity?(trcVal!==null?trcVal:0):trcVal;
+      tcSds.push({tc:name,label:short,value:sdsDisplay??0,goal:50,noData:!hasSomeActivity&&sdsVal===null});
+      tcTrc.push({tc:name,label:short,value:trcDisplay??0,goal:70,noData:!hasSomeActivity&&trcVal===null});
+      tcTable.push({name,short,rec:rec??0,started:started??0,
+        sds:hasSomeActivity?(sdsVal!=null?`${sdsVal.toFixed(1)}%`:"0.0%"):"—",
+        eom,
+        trc:trcDisplay??0,
+        noData:!hasSomeActivity});
     }
   });
   const remote=[];
@@ -943,8 +952,8 @@ function Dashboard(){
             h(GoalBar,{title:"EOM TRC — OBS BY LOCATION",data:[{label:"Denison",value:d.eomObsDenison,goal:70},{label:"Gainesville",value:d.eomObsGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomObsBonham,goal:70}]:[])]})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:22}},
-            h(KpiCard,{label:"EOM New Exam Conv.",value:d.eomNewAll,goal:70}),
-            h(KpiCard,{label:"EOM OBS/RR/P2 Conv.",value:d.eomObsAll,goal:70})
+            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
+            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:46,fontWeight:900,margin:"0 0 6px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:12,margin:"0 0 12px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:4,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
@@ -960,11 +969,13 @@ function Dashboard(){
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
-                h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--")
+                h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched"),
-                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--")
+                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
@@ -984,11 +995,13 @@ function Dashboard(){
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
-                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--")
+                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Goal"),
-                h('p',{style:{color:C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},"85%")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"vs Goal"),
+                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},
+                  d.obsKeptAll!=null?((d.obsKeptAll-85)>=0?"+":"")+((d.obsKeptAll-85).toFixed(1))+"%":"--")
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
@@ -1550,9 +1563,18 @@ function extractMonthData(labelList,hasBonham){
       else if(lbl.includes("patients converted by eom"))eom=num(val)||0;
     }
     if(rec!==null||started!==null){
-      tcSds.push({tc:name,label:short,value:sdsVal??0,goal:50});
-      tcTrc.push({tc:name,label:short,value:trcVal??0,goal:70});
-      tcTable.push({name,short,rec:rec??0,started:started??0,sds:sdsVal!=null?`${sdsVal.toFixed(1)}%`:"—",eom,trc:trcVal??0});
+      // If TC has recs/starts but null conversion, treat as 0% (not no-data)
+      // Only skip if rec===null AND started===null (truly no activity like Ana)
+      const hasSomeActivity=(rec!==null&&rec>0)||(started!==null&&started>0);
+      const sdsDisplay=hasSomeActivity?(sdsVal!==null?sdsVal:0):sdsVal;
+      const trcDisplay=hasSomeActivity?(trcVal!==null?trcVal:0):trcVal;
+      tcSds.push({tc:name,label:short,value:sdsDisplay??0,goal:50,noData:!hasSomeActivity&&sdsVal===null});
+      tcTrc.push({tc:name,label:short,value:trcDisplay??0,goal:70,noData:!hasSomeActivity&&trcVal===null});
+      tcTable.push({name,short,rec:rec??0,started:started??0,
+        sds:hasSomeActivity?(sdsVal!=null?`${sdsVal.toFixed(1)}%`:"0.0%"):"—",
+        eom,
+        trc:trcDisplay??0,
+        noData:!hasSomeActivity});
     }
   });
   const remote=[];
@@ -2014,8 +2036,8 @@ function Dashboard(){
             h(GoalBar,{title:"EOM TRC — OBS BY LOCATION",data:[{label:"Denison",value:d.eomObsDenison,goal:70},{label:"Gainesville",value:d.eomObsGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomObsBonham,goal:70}]:[])]})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:22}},
-            h(KpiCard,{label:"EOM New Exam Conv.",value:d.eomNewAll,goal:70}),
-            h(KpiCard,{label:"EOM OBS/RR/P2 Conv.",value:d.eomObsAll,goal:70})
+            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
+            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:46,fontWeight:900,margin:"0 0 6px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:11,margin:"0 0 4px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:12,margin:"0 0 12px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:4,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
@@ -2031,11 +2053,13 @@ function Dashboard(){
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
-                h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--")
+                h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched"),
-                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--")
+                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
@@ -2055,11 +2079,13 @@ function Dashboard(){
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
-                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--")
+                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Goal"),
-                h('p',{style:{color:C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},"85%")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"vs Goal"),
+                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},
+                  d.obsKeptAll!=null?((d.obsKeptAll-85)>=0?"+":"")+((d.obsKeptAll-85).toFixed(1))+"%":"--")
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
