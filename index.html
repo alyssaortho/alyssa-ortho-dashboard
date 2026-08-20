@@ -436,13 +436,18 @@ function extractMonthData(labelList,hasBonham){
     }
     return null;
   };
-  // Special fuzzy finder for exam kept rate (label has newline in sheet, varies by month)
+  // Special fuzzy finder for exam kept rate - very broad match
   const getExamKeptAll=()=>{
-    const k=Object.keys(labelMap).find(k=>
-      k.includes("exam kept rate") && k.includes("all") &&
-      (k.includes("both locations")||k.includes("all locations")) &&
-      (k.includes("kept+not")||k.includes("kept not")||k.includes("kept/(kept"))
-    );
+    // Log all keys containing "exam" for debugging
+    const examKeys=Object.keys(labelMap).filter(k=>k.includes("exam kept"));
+    if(examKeys.length)console.log("examKept keys found:",examKeys);
+    else console.warn("NO exam kept keys in labelMap. All keys:",Object.keys(labelMap).slice(0,30));
+    const k=Object.keys(labelMap).find(k=>k.includes("exam kept rate")&&(k.includes("both")||k.includes("all loc")));
+    if(!k){
+      // Even broader: just find any exam kept rate with a percentage value
+      const k2=Object.keys(labelMap).find(k=>k.includes("exam kept rate")&&labelMap[k]&&labelMap[k].includes("%"));
+      if(k2){console.log("Used broad match:",k2);return pct(labelMap[k2]);}
+    }
     return k?pct(labelMap[k]):null;
   };
   const TC_DEFS=[{name:"Alex",short:"Alex"},{name:"Sandra Diaz",short:"S.Diaz"},{name:"Sandra Stevens",short:"S.Stevens"},{name:"Ana Ferreria",short:"Ana"},{name:"Maricssa DelToro",short:"Maricssa"}];
@@ -459,14 +464,18 @@ function extractMonthData(labelList,hasBonham){
       else if(lbl==="tx started total")started=num(val);
       else if(lbl==="sds conversion %"||lbl==="sds conversion")sdsVal=pct(val);
       else if(lbl==="trc conversion %"||lbl==="trc conversion")trcVal=pct(val);
-      else if(lbl==="conversion %"){
+      else if(lbl==="conversion %"||lbl==="sds%"||lbl==="sds %"){
         if(!firstConv){
           firstConv=true;
-          // Check if this TC block has an explicit SDS label anywhere
+          // Check what labeled conversion rows exist in this TC block
           const blockLabels=labelList.slice(hdrIdx+1,Math.min(hdrIdx+20,labelList.length)).map(r=>norm(r.label));
-          const hasSdsLabel=blockLabels.some(l=>l==="sds conversion %"||l==="sds conversion");
-          // Jan has no SDS label - lone "Conversion %" is TRC; other months it's SDS
-          if(hasSdsLabel){sdsVal=pct(val);}else{trcVal=pct(val);}
+          const hasSdsLabel=blockLabels.some(l=>l==="sds conversion %"||l==="sds conversion"||l==="sds%"||l==="sds %");
+          const hasTrcLabel=blockLabels.some(l=>l==="trc conversion %"||l==="trc conversion"||l==="trc%");
+          console.log("TC block",name,"- hasSdsLabel:",hasSdsLabel,"hasTrcLabel:",hasTrcLabel,"blockLabels:",blockLabels.filter(l=>l.includes("conv")||l.includes("trc")||l.includes("sds")));
+          // Jan: no SDS label exists -> first Conversion% = TRC
+          // All other months: first Conversion% = SDS
+          if(!hasSdsLabel&&!hasTrcLabel){trcVal=pct(val);}
+          else{sdsVal=pct(val);}
         } else {
           if(sdsVal===null)sdsVal=pct(val);
           else if(trcVal===null)trcVal=pct(val);
@@ -602,6 +611,35 @@ function TrendBar({allData,metricKey,goal,label,isCount}){
   );
 }
 
+function RGCard({month,allFin,savePending}){
+  const rgVal=allFin[month]?.rgCount!=null?parseInt(allFin[month].rgCount)||0:null;
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(String(rgVal??""));
+  const commit=()=>{
+    const updated={...allFin,[month]:{...(allFin[month]||{}),rgCount:draft,savedAt:new Date().toISOString()}};
+    savePending(month,null,updated[month]);
+    setEditing(false);
+  };
+  return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h("p",{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG Provided"),
+    h("p",{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},rgVal!=null?rgVal:"--"),
+    h("div",{style:{marginTop:8}},
+      editing
+        ?h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+            h("input",{type:"number",min:"0",value:draft,
+              onChange:function(e){setDraft(e.target.value);},
+              onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+              autoFocus:true,
+              style:{width:64,padding:"4px 8px",fontSize:14,border:"1px solid "+C.border,borderRadius:5,fontFamily:F,background:C.panelAlt,color:C.text,outline:"none"}}),
+            h("button",{onClick:commit,style:{fontSize:11,padding:"4px 12px",background:C.royal,color:C.white,border:"none",borderRadius:5,cursor:"pointer",fontFamily:F}},"Save"),
+            h("button",{onClick:function(){setEditing(false);},style:{fontSize:11,padding:"4px 8px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,cursor:"pointer",fontFamily:F}},"✕")
+          )
+        :h("button",{onClick:function(){setDraft(String(rgVal??""));setEditing(true);},
+            style:{fontSize:11,padding:"5px 14px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,cursor:"pointer",fontFamily:F}},
+            rgVal!=null?"✏ Edit":"+ Enter count")
+    )
+  );
+}
 function StartsCard({month,d,ppData,allFin,savePending}){
   const thisMonthStarts=ppData[month]?.starts??d.totalRec??0;
   const pendingStarts=parseInt(allFin[month]?.pendingStarts||0)||0;
@@ -642,7 +680,7 @@ function StartsCard({month,d,ppData,allFin,savePending}){
     )
   );
 }
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"trends",label:"Trends"},{id:"financial",label:"Financial",locked:true}];
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
@@ -763,8 +801,10 @@ function Dashboard(){
   const [lastRefresh,setLastRefresh]=useState(null);
   const [error,setError]=useState(null);
   const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
-  const savePending=(mo,val)=>{
-    const updated={...allFin,[mo]:{...(allFin[mo]||{}),pendingStarts:val,savedAt:new Date().toISOString()}};
+  const savePending=(mo,pendingVal,overrideObj)=>{
+    const base=allFin[mo]||{};
+    const patch=overrideObj||{...(pendingVal!=null?{pendingStarts:pendingVal}:{}),savedAt:new Date().toISOString()};
+    const updated={...allFin,[mo]:{...base,...patch,savedAt:new Date().toISOString()}};
     setAllFin(updated);
     try{localStorage.setItem(FIN_STORAGE_KEY,JSON.stringify(updated));}catch(e){}
   };
@@ -860,18 +900,7 @@ function Dashboard(){
         h(SH,{label:"KPIs",color:C.blue,month}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
           h(StartsCard,{month,d,ppData,allFin,savePending}),
-          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-            h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG Provided"),
-            h('p',{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},
-              ppData[month]?.rg??((allFin[month]?.rgCount&&parseInt(allFin[month].rgCount)>0)?parseInt(allFin[month].rgCount):"--")
-            ),
-            h('div',{style:{marginTop:8,display:"flex",flexDirection:"column",gap:3}},
-              h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"$880 per RG"),
-              ppData[month]?.rg!=null
-                ?h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"From Practice Performance (Col K=TRUE)")
-                :h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"Enter in Financial tab as backup")
-            )
-          ),
+          h(RGCard,{month,allFin,savePending}),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
           h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true})
         ),
