@@ -602,6 +602,46 @@ function TrendBar({allData,metricKey,goal,label,isCount}){
   );
 }
 
+function StartsCard({month,d,ppData,allFin,savePending}){
+  const thisMonthStarts=ppData[month]?.starts??d.totalRec??0;
+  const pendingStarts=parseInt(allFin[month]?.pendingStarts||0)||0;
+  const sds=d.totalSameDay??0;
+  const eom=d.eomConverted??0;
+  const totalStarts=sds+eom+pendingStarts;
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(String(pendingStarts||""));
+  const commit=()=>{savePending(month,draft);setEditing(false);};
+  return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h("p",{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Starts"),
+    h("p",{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},totalStarts||"--"),
+    h("div",{style:{marginTop:8,display:"flex",flexDirection:"column",gap:4}},
+      h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"SDS: "+sds),
+      h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"EOM Converted: "+eom),
+      h("div",{style:{display:"flex",alignItems:"center",gap:6,margin:"2px 0"}},
+        h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"Pending: "),
+        editing
+          ?h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+              h("input",{type:"number",min:"0",value:draft,
+                onChange:function(e){setDraft(e.target.value);},
+                onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+                autoFocus:true,
+                style:{width:56,padding:"2px 6px",fontSize:12,border:"1px solid "+C.border,borderRadius:5,fontFamily:F,background:C.panelAlt,color:C.text,outline:"none"}}),
+              h("button",{onClick:commit,style:{fontSize:10,padding:"2px 8px",background:C.royal,color:C.white,border:"none",borderRadius:4,cursor:"pointer",fontFamily:F}},"Save"),
+              h("button",{onClick:function(){setEditing(false);},style:{fontSize:10,padding:"2px 6px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:4,cursor:"pointer",fontFamily:F}},"✕")
+            )
+          :h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+              h("span",{style:{color:pendingStarts>0?C.text:C.muted,fontSize:11,fontFamily:F}},pendingStarts>0?pendingStarts:"--"),
+              h("button",{onClick:function(){setDraft(String(pendingStarts||""));setEditing(true);},
+                style:{fontSize:9,padding:"2px 7px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:4,cursor:"pointer",fontFamily:F,letterSpacing:"0.04em"}},
+                pendingStarts>0?"edit":"+ add")
+            )
+      ),
+      h("div",{style:{height:1,background:C.border,margin:"4px 0"}}),
+      h("p",{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+totalStarts),
+      h("p",{style:{color:C.muted,fontSize:9,margin:"2px 0 0",fontFamily:F}},"SDS + EOM + Pending from prev month")
+    )
+  );
+}
 const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"trends",label:"Trends"},{id:"financial",label:"Financial",locked:true}];
 const FIN_PIN="9855";
 const FIN_STORAGE_KEY="ao_fin_2026";
@@ -723,6 +763,11 @@ function Dashboard(){
   const [lastRefresh,setLastRefresh]=useState(null);
   const [error,setError]=useState(null);
   const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
+  const savePending=(mo,val)=>{
+    const updated={...allFin,[mo]:{...(allFin[mo]||{}),pendingStarts:val,savedAt:new Date().toISOString()}};
+    setAllFin(updated);
+    try{localStorage.setItem(FIN_STORAGE_KEY,JSON.stringify(updated));}catch(e){}
+  };
   const [ppData,setPpData]=useState({});
 
   const loadAll=useCallback(async()=>{
@@ -814,17 +859,7 @@ function Dashboard(){
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
-          h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-            h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Starts"),
-            h('p',{style:{color:C.blue,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},ppData[month]?.starts??d.totalRec??"--"),
-            h('div',{style:{marginTop:8,display:"flex",flexDirection:"column",gap:3}},
-              h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"SDS: "+(d.totalSameDay??0)),
-              h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},"EOM Converted: "+(d.eomConverted??0)),
-              h('div',{style:{height:1,background:C.border,margin:"4px 0"}}),
-              h('p',{style:{color:C.blue,fontSize:12,fontWeight:700,margin:0,fontFamily:F}},"Total: "+((d.totalSameDay??0)+(d.eomConverted??0))),
-              ppData[month]?.starts&&h('p',{style:{color:C.muted,fontSize:10,margin:"2px 0 0",fontFamily:F}},"From Practice Performance (≥$2,980)")
-            )
-          ),
+          h(StartsCard,{month,d,ppData,allFin,savePending}),
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG Provided"),
             h('p',{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},
