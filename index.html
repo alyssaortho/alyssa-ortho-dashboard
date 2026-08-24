@@ -695,8 +695,32 @@ function StartsCard({month,d,allFin,savePending}){
     )
   );
 }
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
+function PinGate({pin,label,storageKey,children}){
+  const [unlocked,setUnlocked]=useState(()=>{try{return sessionStorage.getItem(storageKey)==="1";}catch(e){return false;}});
+  const [entry,setEntry]=useState("");
+  const [err,setErr]=useState(false);
+  const tryPin=()=>{
+    if(entry===pin){
+      setUnlocked(true);setErr(false);
+      try{sessionStorage.setItem(storageKey,"1");}catch(e){}
+    }else{setErr(true);setEntry("");}
+  };
+  if(unlocked)return children;
+  return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:480,flexDirection:"column"}},
+    h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:16,padding:"40px 48px",boxShadow:"0 4px 24px rgba(0,48,135,0.12)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,minWidth:320}},
+      h("div",{style:{fontSize:40}},"🔒"),
+      h("p",{style:{color:C.text,fontWeight:900,fontSize:16,fontFamily:F,margin:0,letterSpacing:"0.08em",textTransform:"uppercase"}},label),
+      h("p",{style:{color:C.muted,fontSize:12,fontFamily:F,margin:0}},"Enter PIN to access"),
+      h("input",{type:"password",maxLength:8,value:entry,onChange:function(e){setEntry(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")tryPin();if(e.key==="Escape")setEntry("");},autoFocus:true,
+        style:{textAlign:"center",fontSize:28,letterSpacing:"0.4em",border:"2px solid "+(err?C.orange:C.border),borderRadius:10,padding:"12px 20px",width:160,fontFamily:F,outline:"none",background:C.panelAlt,color:C.text}}),
+      err&&h("p",{style:{color:C.orange,fontSize:12,fontFamily:F,margin:0}},"Incorrect PIN — try again"),
+      h("button",{onClick:tryPin,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"12px 32px",fontSize:14,fontWeight:700,fontFamily:F,cursor:"pointer",letterSpacing:"0.08em"}},"UNLOCK")
+    )
+  );
+}
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
+const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
 function FinancialTab({month,allFin,setAllFin}){
@@ -893,7 +917,7 @@ function Dashboard(){
       MONTH_KEYS.filter(m=>!!allData[m]).map(m=>{const active=m===month;return h('button',{key:m,onClick:()=>setMonth(m),style:{padding:"12px 16px",background:"none",border:"none",color:active?C.white:"#a0bddf",borderBottom:active?`3px solid ${C.orange}`:"3px solid transparent",fontSize:12,fontWeight:active?800:400,fontFamily:F,whiteSpace:"nowrap",letterSpacing:"0.06em"}},m.slice(0,3).toUpperCase());})
     ),
     h('div',{style:{background:C.panelAlt,borderBottom:`2px solid ${C.border}`,display:"flex",padding:"0 36px",overflowX:"auto"}},
-      SECTIONS.map(sec=>h("button",{key:sec.id,onClick:function(){setSection(sec.id);},style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?(sec.locked?C.green:C.royal):C.muted,borderBottom:section===sec.id?"3px solid "+(sec.locked?C.green:C.orange):"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.locked?"🔒 Financial":sec.label))
+      SECTIONS.map(sec=>h("button",{key:sec.id,onClick:function(){setSection(sec.id);},style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?(sec.locked?C.green:C.royal):C.muted,borderBottom:section===sec.id?"3px solid "+(sec.locked?C.green:C.orange):"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.locked?"🔒 "+sec.label:sec.label))
     ),
     error&&!loading&&h('div',{style:{margin:"24px 36px",background:"#FFF5F5",border:"1px solid #FEB2B2",borderRadius:10,padding:"16px 20px"}},
       h('p',{style:{color:"#C53030",fontFamily:F,fontSize:13,margin:0}},"⚠ "+error)
@@ -941,7 +965,8 @@ function Dashboard(){
           )
         )
       ),
-      section==="tc"&&h('div',null,
+      section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
+        h('div',null,
         h(SH,{label:"TC Performance",color:C.orange,month}),
         d.tcTable.length?h(Fragment,null,
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
@@ -969,6 +994,7 @@ function Dashboard(){
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
           )
         )):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
+      )
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month}),
@@ -1057,16 +1083,14 @@ function Dashboard(){
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
-          h(TrendBar,{allData,metricKey:"totalSameDay",goal:null,label:"SAME DAY STARTS",isCount:true}),
-          h(TrendBar,{allData,metricKey:"sdsTotal",goal:50,label:"SDS%"}),
-          h(TrendBar,{allData,metricKey:"eomTotal",goal:70,label:"EOM TRC TOTAL"}),
-          h(TrendBar,{allData,metricKey:"eomNewDenison",goal:70,label:"EOM NEW — DENISON"}),
-          h(TrendBar,{allData,metricKey:"eomNewGainesville",goal:70,label:"EOM NEW — GAINESVILLE"}),
-          h(TrendBar,{allData,metricKey:"eomObsAll",goal:70,label:"EOM OBS TOTAL"}),
-          h(TrendBar,{allData,metricKey:"examKeptResched",goal:85,label:"EXAM KEPT W/ RESCHED"}),
           h(TrendBar,{allData,metricKey:"totalNewExams",goal:null,label:"TOTAL NEW EXAMS",isCount:true}),
+          h(TrendBar,{allData,metricKey:"totalObsCompleted",goal:null,label:"TOTAL OBS",isCount:true}),
+          h(TrendBar,{allData,metricKey:"totalSameDay",goal:null,label:"TOTAL STARTS (SDS)",isCount:true}),
+          h(TrendBar,{allData,metricKey:"eomTotal",goal:70,label:"TRC % TOTAL"}),
+          h(TrendBar,{allData,metricKey:"sdsTotal",goal:50,label:"SDS%"}),
           h(TrendBar,{allData,metricKey:"newExamKeptAll",goal:85,label:"NEW EXAM KEPT"}),
-          h(TrendBar,{allData,metricKey:"obsKeptAll",goal:85,label:"OBS KEPT"})
+          h(TrendBar,{allData,metricKey:"obsKeptAll",goal:85,label:"OBS KEPT"}),
+          h(TrendBar,{allData,metricKey:"examKeptResched",goal:85,label:"EXAM KEPT W/ RESCHED"})
         ),
         h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"MONTH-OVER-MONTH TABLE"),
@@ -1074,7 +1098,7 @@ function Dashboard(){
             h('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:12,fontFamily:F}},
               h('thead',null,h('tr',{style:{background:C.panelAlt}},["Metric","Goal",...MONTH_KEYS.filter(m=>allData[m]).map(m=>m.slice(0,3).toUpperCase())].map(hd=>h('th',{key:hd,style:{padding:"10px 12px",textAlign:"left",color:C.subtext,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:`2px solid ${C.border}`,fontFamily:F,whiteSpace:"nowrap"}},hd)))),
               h('tbody',null,
-                [{label:"SDS%",key:"sdsTotal",goal:50},{label:"Same Day Starts",key:"totalSameDay",goal:null,isCount:true},{label:"EOM TRC Total",key:"eomTotal",goal:70},{label:"EOM New Denison",key:"eomNewDenison",goal:70},{label:"EOM New G'ville",key:"eomNewGainesville",goal:70},{label:"EOM New Bonham",key:"eomNewBonham",goal:70},{label:"EOM OBS Total",key:"eomObsAll",goal:70},{label:"Exam Show Rate",key:"examKeptAll",goal:null},{label:"Exam Kept Resched",key:"examKeptResched",goal:85},{label:"Total New Exams",key:"totalNewExams",goal:null,isCount:true},{label:"New Exam Kept",key:"newExamKeptAll",goal:85},{label:"New Kept Denison",key:"newExamKeptDenison",goal:85},{label:"New Kept G'ville",key:"newExamKeptGainesville",goal:85},{label:"OBS Kept All",key:"obsKeptAll",goal:85},{label:"OBS Kept Denison",key:"obsKeptDenison",goal:85},{label:"OBS Kept G'ville",key:"obsKeptGainesville",goal:85}]
+                [{label:"SDS%",key:"sdsTotal",goal:50},{label:"Same Day Starts",key:"totalSameDay",goal:null,isCount:true},{label:"EOM TRC Total",key:"eomTotal",goal:70},{label:"Total OBS",key:"totalObsCompleted",goal:null,isCount:true},{label:"Total Starts",key:"totalSameDay",goal:null,isCount:true},{label:"TRC % Total",key:"eomTotal",goal:70},{label:"Exam Show Rate",key:"examKeptAll",goal:null},{label:"Exam Kept Resched",key:"examKeptResched",goal:85},{label:"Total New Exams",key:"totalNewExams",goal:null,isCount:true},{label:"New Exam Kept",key:"newExamKeptAll",goal:85},{label:"New Kept Denison",key:"newExamKeptDenison",goal:85},{label:"New Kept G'ville",key:"newExamKeptGainesville",goal:85},{label:"OBS Kept All",key:"obsKeptAll",goal:85},{label:"OBS Kept Denison",key:"obsKeptDenison",goal:85},{label:"OBS Kept G'ville",key:"obsKeptGainesville",goal:85}]
                 .map((row,i)=>h('tr',{key:i,style:{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.panel:C.panelAlt}},
                   h('td',{style:{padding:"9px 12px",color:C.text,fontWeight:600,whiteSpace:"nowrap"}},row.label),
                   h('td',{style:{padding:"9px 12px",color:C.muted}},row.goal?`${row.goal}%`:"—"),
@@ -1794,8 +1818,9 @@ function StartsCard({month,d,allFin,savePending}){
     )
   );
 }
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"tc",label:"TC Performance"},{id:"exams",label:"Exam Outcomes"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
+const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
 function FinancialTab({month,allFin,setAllFin}){
@@ -1992,7 +2017,7 @@ function Dashboard(){
       MONTH_KEYS.filter(m=>!!allData[m]).map(m=>{const active=m===month;return h('button',{key:m,onClick:()=>setMonth(m),style:{padding:"12px 16px",background:"none",border:"none",color:active?C.white:"#a0bddf",borderBottom:active?`3px solid ${C.orange}`:"3px solid transparent",fontSize:12,fontWeight:active?800:400,fontFamily:F,whiteSpace:"nowrap",letterSpacing:"0.06em"}},m.slice(0,3).toUpperCase());})
     ),
     h('div',{style:{background:C.panelAlt,borderBottom:`2px solid ${C.border}`,display:"flex",padding:"0 36px",overflowX:"auto"}},
-      SECTIONS.map(sec=>h("button",{key:sec.id,onClick:function(){setSection(sec.id);},style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?(sec.locked?C.green:C.royal):C.muted,borderBottom:section===sec.id?"3px solid "+(sec.locked?C.green:C.orange):"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.locked?"🔒 Financial":sec.label))
+      SECTIONS.map(sec=>h("button",{key:sec.id,onClick:function(){setSection(sec.id);},style:{padding:"12px 28px",background:"none",border:"none",color:section===sec.id?(sec.locked?C.green:C.royal):C.muted,borderBottom:section===sec.id?"3px solid "+(sec.locked?C.green:C.orange):"3px solid transparent",fontSize:13,fontWeight:section===sec.id?800:500,fontFamily:F,letterSpacing:"0.06em",whiteSpace:"nowrap"}},sec.locked?"🔒 "+sec.label:sec.label))
     ),
     error&&!loading&&h('div',{style:{margin:"24px 36px",background:"#FFF5F5",border:"1px solid #FEB2B2",borderRadius:10,padding:"16px 20px"}},
       h('p',{style:{color:"#C53030",fontFamily:F,fontSize:13,margin:0}},"⚠ "+error)
@@ -2040,7 +2065,8 @@ function Dashboard(){
           )
         )
       ),
-      section==="tc"&&h('div',null,
+      section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
+        h('div',null,
         h(SH,{label:"TC Performance",color:C.orange,month}),
         d.tcTable.length?h(Fragment,null,
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
@@ -2068,6 +2094,7 @@ function Dashboard(){
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
           )
         )):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
+      )
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month}),
@@ -2156,16 +2183,14 @@ function Dashboard(){
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
-          h(TrendBar,{allData,metricKey:"totalSameDay",goal:null,label:"SAME DAY STARTS",isCount:true}),
-          h(TrendBar,{allData,metricKey:"sdsTotal",goal:50,label:"SDS%"}),
-          h(TrendBar,{allData,metricKey:"eomTotal",goal:70,label:"EOM TRC TOTAL"}),
-          h(TrendBar,{allData,metricKey:"eomNewDenison",goal:70,label:"EOM NEW — DENISON"}),
-          h(TrendBar,{allData,metricKey:"eomNewGainesville",goal:70,label:"EOM NEW — GAINESVILLE"}),
-          h(TrendBar,{allData,metricKey:"eomObsAll",goal:70,label:"EOM OBS TOTAL"}),
-          h(TrendBar,{allData,metricKey:"examKeptResched",goal:85,label:"EXAM KEPT W/ RESCHED"}),
           h(TrendBar,{allData,metricKey:"totalNewExams",goal:null,label:"TOTAL NEW EXAMS",isCount:true}),
+          h(TrendBar,{allData,metricKey:"totalObsCompleted",goal:null,label:"TOTAL OBS",isCount:true}),
+          h(TrendBar,{allData,metricKey:"totalSameDay",goal:null,label:"TOTAL STARTS (SDS)",isCount:true}),
+          h(TrendBar,{allData,metricKey:"eomTotal",goal:70,label:"TRC % TOTAL"}),
+          h(TrendBar,{allData,metricKey:"sdsTotal",goal:50,label:"SDS%"}),
           h(TrendBar,{allData,metricKey:"newExamKeptAll",goal:85,label:"NEW EXAM KEPT"}),
-          h(TrendBar,{allData,metricKey:"obsKeptAll",goal:85,label:"OBS KEPT"})
+          h(TrendBar,{allData,metricKey:"obsKeptAll",goal:85,label:"OBS KEPT"}),
+          h(TrendBar,{allData,metricKey:"examKeptResched",goal:85,label:"EXAM KEPT W/ RESCHED"})
         ),
         h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"MONTH-OVER-MONTH TABLE"),
@@ -2173,7 +2198,7 @@ function Dashboard(){
             h('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:12,fontFamily:F}},
               h('thead',null,h('tr',{style:{background:C.panelAlt}},["Metric","Goal",...MONTH_KEYS.filter(m=>allData[m]).map(m=>m.slice(0,3).toUpperCase())].map(hd=>h('th',{key:hd,style:{padding:"10px 12px",textAlign:"left",color:C.subtext,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:`2px solid ${C.border}`,fontFamily:F,whiteSpace:"nowrap"}},hd)))),
               h('tbody',null,
-                [{label:"SDS%",key:"sdsTotal",goal:50},{label:"Same Day Starts",key:"totalSameDay",goal:null,isCount:true},{label:"EOM TRC Total",key:"eomTotal",goal:70},{label:"EOM New Denison",key:"eomNewDenison",goal:70},{label:"EOM New G'ville",key:"eomNewGainesville",goal:70},{label:"EOM New Bonham",key:"eomNewBonham",goal:70},{label:"EOM OBS Total",key:"eomObsAll",goal:70},{label:"Exam Show Rate",key:"examKeptAll",goal:null},{label:"Exam Kept Resched",key:"examKeptResched",goal:85},{label:"Total New Exams",key:"totalNewExams",goal:null,isCount:true},{label:"New Exam Kept",key:"newExamKeptAll",goal:85},{label:"New Kept Denison",key:"newExamKeptDenison",goal:85},{label:"New Kept G'ville",key:"newExamKeptGainesville",goal:85},{label:"OBS Kept All",key:"obsKeptAll",goal:85},{label:"OBS Kept Denison",key:"obsKeptDenison",goal:85},{label:"OBS Kept G'ville",key:"obsKeptGainesville",goal:85}]
+                [{label:"SDS%",key:"sdsTotal",goal:50},{label:"Same Day Starts",key:"totalSameDay",goal:null,isCount:true},{label:"EOM TRC Total",key:"eomTotal",goal:70},{label:"Total OBS",key:"totalObsCompleted",goal:null,isCount:true},{label:"Total Starts",key:"totalSameDay",goal:null,isCount:true},{label:"TRC % Total",key:"eomTotal",goal:70},{label:"Exam Show Rate",key:"examKeptAll",goal:null},{label:"Exam Kept Resched",key:"examKeptResched",goal:85},{label:"Total New Exams",key:"totalNewExams",goal:null,isCount:true},{label:"New Exam Kept",key:"newExamKeptAll",goal:85},{label:"New Kept Denison",key:"newExamKeptDenison",goal:85},{label:"New Kept G'ville",key:"newExamKeptGainesville",goal:85},{label:"OBS Kept All",key:"obsKeptAll",goal:85},{label:"OBS Kept Denison",key:"obsKeptDenison",goal:85},{label:"OBS Kept G'ville",key:"obsKeptGainesville",goal:85}]
                 .map((row,i)=>h('tr',{key:i,style:{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.panel:C.panelAlt}},
                   h('td',{style:{padding:"9px 12px",color:C.text,fontWeight:600,whiteSpace:"nowrap"}},row.label),
                   h('td',{style:{padding:"9px 12px",color:C.muted}},row.goal?`${row.goal}%`:"—"),
