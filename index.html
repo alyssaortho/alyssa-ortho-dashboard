@@ -763,11 +763,11 @@ function CollectionsTab({month,allFin,savePending}){
   );
 
   // Entry form
-  const Field=({fkey,label,hint})=>h("div",{style:{marginBottom:16}},
+  const Field=({fkey,label,hint,noDollar,prefix})=>h("div",{style:{marginBottom:16}},
     h("label",{style:{display:"block",color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:F,marginBottom:4}},label),
     hint&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"0 0 5px"}},hint),
     h("div",{style:{display:"flex",alignItems:"center",gap:6}},
-      h("span",{style:{color:C.muted,fontSize:15,fontFamily:F}},"$"),
+      h("span",{style:{color:C.muted,fontSize:15,fontFamily:F}},noDollar?(prefix||"%"):"$"),
       h("input",{type:"text",value:form[fkey],onChange:function(e){const v=e.target.value;setForm(function(p){const n={...p};n[fkey]=v;return n;});},
         placeholder:"0.00",
         style:{border:"1px solid "+C.border,borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:F,width:"100%",outline:"none",background:C.panelAlt,color:C.text}})
@@ -779,7 +779,7 @@ function CollectionsTab({month,allFin,savePending}){
     h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,maxWidth:900}},
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
-        h(Field,{fkey:"collectionRate",label:"Collection Rate %",hint:"e.g. 98.5"}),
+        h(Field,{fkey:"collectionRate",label:"Collection Rate %",hint:"e.g. 98.50",prefix:"%",noDollar:true}),
         h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
         h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
         h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
@@ -809,7 +809,7 @@ function CollectionsTab({month,allFin,savePending}){
     ):h("div",null,
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
         ...[
-          {label:"Collection Rate %",val:d.collectionRate?(parseFloat(d.collectionRate)+"%"):"--",color:C.royal},
+          {label:"Collection Rate %",val:d.collectionRate?(parseFloat(d.collectionRate).toFixed(2)+"%"):"--",color:C.royal},
           {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.blue},
           {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
           {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
