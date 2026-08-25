@@ -737,8 +737,8 @@ function CollectionsTab({month,allFin,savePending}){
   };
   const save=()=>{
     const toN=v=>parseFloat(String(v||"").replace(/[$,]/g,""))||0;
-    const autoTotal=(toN(form.collectionSummary1)+toN(form.sunbitDeposit)-toN(form.sunbitProduction));
-    const finalForm={...form,collectionTotal:autoTotal>0?autoTotal.toFixed(2):form.collectionTotal};
+    const autoTotal=toN(form.collectionSummary1)+toN(form.sunbitDeposit)-toN(form.sunbitProduction);
+    const finalForm={...form,collectionTotal:autoTotal!==0?autoTotal.toFixed(2):form.collectionTotal};
     const updated={...allColl,[month]:{...finalForm,savedAt:new Date().toISOString()}};
     setAllColl(updated);
     try{localStorage.setItem(COLL_KEY,JSON.stringify(updated));}catch(e){}
@@ -783,7 +783,21 @@ function CollectionsTab({month,allFin,savePending}){
         h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
         h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
         h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
-        h(Field,{fkey:"collectionTotal",label:"Collection Total",hint:"Collection Summary + Sunbit Deposit − Sunbit Production",readOnly:true,autoCalc:true})
+        h("div",{style:{marginBottom:16}},
+          h("label",{style:{display:"block",color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:F,marginBottom:4}},"Collection Total"),
+          h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"0 0 5px"}},"Collection Summary + Sunbit Deposit − Sunbit Production"),
+          h("div",{style:{border:"1px solid "+C.border,borderRadius:8,padding:"10px 14px",background:C.panelAlt,display:"flex",alignItems:"center",gap:6}},
+            h("span",{style:{color:C.muted,fontSize:15,fontFamily:F}},"$"),
+            h("span",{style:{color:C.green,fontSize:18,fontWeight:700,fontFamily:F}},
+              (()=>{
+                const toN=v=>parseFloat(String(v||"").replace(/[$,]/g,""))||0;
+                const t=toN(form.collectionSummary1)+toN(form.sunbitDeposit)-toN(form.sunbitProduction);
+                return t!==0?t.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"--";
+              })()
+            ),
+            h("span",{style:{color:C.muted,fontSize:10,fontFamily:F,marginLeft:"auto"}},"auto-calculated")
+          )
+        )
       ),
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Past Due Timeframes"),
