@@ -721,7 +721,7 @@ function PinGate({pin,label,storageKey,children}){
 function CollectionsTab({month,allFin,savePending}){
   const COLL_KEY="ao_coll_2026";
   const EMPTY_COLL=()=>({
-    collectionSummary1:"",
+    collectionRate:"",collectionSummary1:"",
     sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
     due0_10:"",due11_30:"",due31_60:"",due61_90:"",due90plus:""
   });
@@ -779,6 +779,7 @@ function CollectionsTab({month,allFin,savePending}){
     h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,maxWidth:900}},
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
+        h(Field,{fkey:"collectionRate",label:"Collection Rate %",hint:"e.g. 98.5"}),
         h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
         h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
         h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
@@ -808,6 +809,7 @@ function CollectionsTab({month,allFin,savePending}){
     ):h("div",null,
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
         ...[
+          {label:"Collection Rate %",val:d.collectionRate?(parseFloat(d.collectionRate)+"%"):"--",color:C.royal},
           {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.blue},
           {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
           {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
