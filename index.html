@@ -718,7 +718,124 @@ function PinGate({pin,label,storageKey,children}){
     )
   );
 }
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
+function CollectionsTab({month,allFin,savePending}){
+  const COLL_KEY="ao_coll_2026";
+  const EMPTY_COLL=()=>({
+    collectionSummary1:"",collectionSummary2:"",
+    sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
+    due0_10:"",due11_30:"",due31_60:"",due61_90:"",due90plus:""
+  });
+  const [unlocked,setUnlocked]=useState(()=>{try{return sessionStorage.getItem("coll_unlocked")==="1";}catch(e){return false;}});
+  const [pinEntry,setPinEntry]=useState("");
+  const [pinErr,setPinErr]=useState(false);
+  const [allColl,setAllColl]=useState(()=>{try{const s=localStorage.getItem(COLL_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
+  const [editing,setEditing]=useState(false);
+  const [form,setForm]=useState(EMPTY_COLL());
+  const tryPin=()=>{
+    if(pinEntry==="9715"){setUnlocked(true);setPinErr(false);try{sessionStorage.setItem("coll_unlocked","1");}catch(e){}}
+    else{setPinErr(true);setPinEntry("");}
+  };
+  const save=()=>{
+    const updated={...allColl,[month]:{...form,savedAt:new Date().toISOString()}};
+    setAllColl(updated);
+    try{localStorage.setItem(COLL_KEY,JSON.stringify(updated));}catch(e){}
+    setEditing(false);
+  };
+  const startEdit=()=>{setForm(allColl[month]?{...allColl[month]}:EMPTY_COLL());setEditing(true);};
+  const d=allColl[month];
+  const fmt=v=>{const n=parseFloat(String(v||"").replace(/[$,]/g,""));return (!v||isNaN(n))?"--":"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});};
+  const fmtRaw=v=>{const n=parseFloat(String(v||"").replace(/[$,]/g,""));return (!v||isNaN(n))?0:n;};
+  const totalPastDue=d?fmtRaw(d.due0_10)+fmtRaw(d.due11_30)+fmtRaw(d.due31_60)+fmtRaw(d.due61_90)+fmtRaw(d.due90plus):0;
+
+  if(!unlocked)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:480,flexDirection:"column"}},
+    h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:16,padding:"40px 48px",boxShadow:"0 4px 24px rgba(0,48,135,0.12)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,minWidth:320}},
+      h("div",{style:{fontSize:40}},"🔒"),
+      h("p",{style:{color:C.text,fontWeight:900,fontSize:16,fontFamily:F,margin:0,letterSpacing:"0.08em",textTransform:"uppercase"}},"Collections"),
+      h("p",{style:{color:C.muted,fontSize:12,fontFamily:F,margin:0}},"Enter PIN to access"),
+      h("input",{type:"password",maxLength:8,value:pinEntry,onChange:function(e){setPinEntry(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")tryPin();},autoFocus:true,
+        style:{textAlign:"center",fontSize:28,letterSpacing:"0.4em",border:"2px solid "+(pinErr?C.orange:C.border),borderRadius:10,padding:"12px 20px",width:160,fontFamily:F,outline:"none",background:C.panelAlt,color:C.text}}),
+      pinErr&&h("p",{style:{color:C.orange,fontSize:12,fontFamily:F,margin:0}},"Incorrect PIN — try again"),
+      h("button",{onClick:tryPin,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"12px 32px",fontSize:14,fontWeight:700,fontFamily:F,cursor:"pointer"}},"UNLOCK")
+    )
+  );
+
+  // Entry form
+  const Field=({fkey,label,hint})=>h("div",{style:{marginBottom:16}},
+    h("label",{style:{display:"block",color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:F,marginBottom:4}},label),
+    hint&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"0 0 5px"}},hint),
+    h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+      h("span",{style:{color:C.muted,fontSize:15,fontFamily:F}},"$"),
+      h("input",{type:"text",value:form[fkey],onChange:function(e){const v=e.target.value;setForm(function(p){const n={...p};n[fkey]=v;return n;});},
+        placeholder:"0.00",
+        style:{border:"1px solid "+C.border,borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:F,width:"100%",outline:"none",background:C.panelAlt,color:C.text}})
+    )
+  );
+
+  if(editing)return h("div",null,
+    h(SH,{label:"Collections — Data Entry",color:C.green,month:month}),
+    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,maxWidth:900}},
+      h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
+        h(Field,{fkey:"collectionSummary1",label:"Collection Summary",hint:"OrthoFi → Reports → Collection Summary (row 1)"}),
+        h(Field,{fkey:"collectionSummary2",label:"Collection Summary 2",hint:"OrthoFi → Reports → Collection Summary (row 2)"}),
+        h(Field,{fkey:"sunbitProduction",label:"Sunbit Production",hint:"Sunbit portal → Production total"}),
+        h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)",hint:"Sunbit portal → Net deposit"}),
+        h(Field,{fkey:"collectionTotal",label:"Collection Total",hint:"Combined total"})
+      ),
+      h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Past Due Timeframes"),
+        ...[["due0_10","0–10 Days"],["due11_30","11–30 Days"],["due31_60","31–60 Days"],["due61_90","61–90 Days"],["due90plus","90+ Days"]].map(function(pair){return h(Field,{key:pair[0],fkey:pair[0],label:pair[1]});})
+      )
+    ),
+    h("div",{style:{display:"flex",gap:12,marginTop:20}},
+      h("button",{onClick:save,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"12px 28px",fontSize:13,fontWeight:700,fontFamily:F,cursor:"pointer"}},"💾 Save"),
+      h("button",{onClick:function(){setEditing(false);},style:{background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:8,padding:"12px 20px",fontSize:13,fontFamily:F,cursor:"pointer"}},"Cancel")
+    )
+  );
+
+  // Display view
+  return h("div",null,
+    h(SH,{label:"Collections",color:C.green,month:month}),
+    h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:16}},
+      h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:12,fontWeight:700,fontFamily:F,cursor:"pointer"}},d?"✏ Edit Data":"＋ Enter Data")
+    ),
+    !d?h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:360,flexDirection:"column",gap:14}},
+      h("p",{style:{fontSize:40,margin:0}},"📋"),
+      h("p",{style:{color:C.muted,fontSize:16,fontFamily:F}},"No collections data for "+month+" yet"),
+      h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F,cursor:"pointer"}},"＋ Enter Data")
+    ):h("div",null,
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:24}},
+        ...[
+          {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.blue},
+          {label:"Collection Summary 2",val:fmt(d.collectionSummary2),color:C.blue},
+          {label:"Collection Total",val:fmt(d.collectionTotal),color:C.green},
+          {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
+          {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
+        ].map(function(item){return h("div",{key:item.label,style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+item.color,borderRadius:10,padding:"20px 22px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},item.label),
+          h("p",{style:{color:item.val==="--"?C.muted:item.color,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},item.val)
+        );})
+      ),
+      h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:18}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"Past Due Timeframes"),
+          h("p",{style:{color:C.orange,fontSize:13,fontWeight:700,fontFamily:F,margin:0}},"Total Past Due: "+(totalPastDue>0?"$"+totalPastDue.toLocaleString("en-US",{minimumFractionDigits:2}):"--"))
+        ),
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}},
+          ...[["0–10 Days",d.due0_10,C.green],["11–30 Days",d.due11_30,C.blue],["31–60 Days",d.due31_60,C.orange],["61–90 Days",d.due61_90,C.orange],["90+ Days",d.due90plus,C.royal]].map(function(row){
+            const val=fmt(row[1]);
+            return h("div",{key:row[0],style:{background:C.panelAlt,border:"1px solid "+C.border,borderTop:"3px solid "+row[2],borderRadius:8,padding:"14px 16px"}},
+              h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},row[0]),
+              h("p",{style:{color:val==="--"?C.muted:row[2],fontSize:22,fontWeight:900,margin:0,fontFamily:F}},val)
+            );
+          })
+        )
+      ),
+      d.savedAt&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"12px 0 0",textAlign:"right"}},"Last updated: "+new Date(d.savedAt).toLocaleString())
+    )
+  );
+}
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
 const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
@@ -1079,6 +1196,7 @@ function Dashboard(){
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
             ),
+      section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
@@ -1818,7 +1936,7 @@ function StartsCard({month,d,allFin,savePending}){
     )
   );
 }
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
 const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
@@ -2179,6 +2297,7 @@ function Dashboard(){
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
             ),
+      section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
