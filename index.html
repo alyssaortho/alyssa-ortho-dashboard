@@ -721,7 +721,7 @@ function PinGate({pin,label,storageKey,children}){
 function CollectionsTab({month,allFin,savePending}){
   const COLL_KEY="ao_coll_2026";
   const EMPTY_COLL=()=>({
-    collectionSummary1:"",collectionSummary2:"",
+    collectionSummary1:"",
     sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
     due0_10:"",due11_30:"",due31_60:"",due61_90:"",due90plus:""
   });
@@ -736,7 +736,10 @@ function CollectionsTab({month,allFin,savePending}){
     else{setPinErr(true);setPinEntry("");}
   };
   const save=()=>{
-    const updated={...allColl,[month]:{...form,savedAt:new Date().toISOString()}};
+    const toN=v=>parseFloat(String(v||"").replace(/[$,]/g,""))||0;
+    const autoTotal=(toN(form.collectionSummary1)+toN(form.sunbitDeposit)-toN(form.sunbitProduction));
+    const finalForm={...form,collectionTotal:autoTotal>0?autoTotal.toFixed(2):form.collectionTotal};
+    const updated={...allColl,[month]:{...finalForm,savedAt:new Date().toISOString()}};
     setAllColl(updated);
     try{localStorage.setItem(COLL_KEY,JSON.stringify(updated));}catch(e){}
     setEditing(false);
@@ -776,11 +779,10 @@ function CollectionsTab({month,allFin,savePending}){
     h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,maxWidth:900}},
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
-        h(Field,{fkey:"collectionSummary1",label:"Collection Summary",hint:"OrthoFi → Reports → Collection Summary (row 1)"}),
-        h(Field,{fkey:"collectionSummary2",label:"Collection Summary 2",hint:"OrthoFi → Reports → Collection Summary (row 2)"}),
-        h(Field,{fkey:"sunbitProduction",label:"Sunbit Production",hint:"Sunbit portal → Production total"}),
-        h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)",hint:"Sunbit portal → Net deposit"}),
-        h(Field,{fkey:"collectionTotal",label:"Collection Total",hint:"Combined total"})
+        h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
+        h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
+        h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
+        h(Field,{fkey:"collectionTotal",label:"Collection Total",hint:"Collection Summary + Sunbit Deposit − Sunbit Production",readOnly:true,autoCalc:true})
       ),
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Past Due Timeframes"),
@@ -804,13 +806,12 @@ function CollectionsTab({month,allFin,savePending}){
       h("p",{style:{color:C.muted,fontSize:16,fontFamily:F}},"No collections data for "+month+" yet"),
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F,cursor:"pointer"}},"＋ Enter Data")
     ):h("div",null,
-      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:24}},
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
         ...[
           {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.blue},
-          {label:"Collection Summary 2",val:fmt(d.collectionSummary2),color:C.blue},
-          {label:"Collection Total",val:fmt(d.collectionTotal),color:C.green},
           {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
           {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
+          {label:"Collection Total",val:fmt(d.collectionTotal),color:C.green},
         ].map(function(item){return h("div",{key:item.label,style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+item.color,borderRadius:10,padding:"20px 22px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},item.label),
           h("p",{style:{color:item.val==="--"?C.muted:item.color,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},item.val)
