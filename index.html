@@ -529,11 +529,15 @@ function extractMonthData(labelList,hasBonham){
     newConverted:num(get("Total # of New Exams Converted")),newPending:num(get("Total # of New Exams that went into Pending")),
     newIntoObs:num(get("Total # of New Exams that went into OBS")),obsConverted:num(get("Total # of OBS (OBS/RR/P2) Converted")),
     obsPending:num(get("Total # of OBS (OBS/RR/P2) that went into Pending")),obsStayed:num(get("Total # of OBS (OBS/RR/P2) that stayed in OBS")),
-    // Labels confirmed from sheet scan:
+    // Confirmed exact labels from sheet
+    newKeptCount:num(get("Total Number of New Exams Kept")),
     newNotKept:num(get("Total Number of New Exams Not Kept")),
+    // No separate New/OBS rescheduled - only all-types total exists in sheet
     totalRescheduledAll:num(get("Total Exams (All) Rescheduled")),
     newRescheduled:null,
-    // OBS not kept = sum of all three OBS sub-types
+    obsRescheduled:null,
+    totalNotKeptAll:null,
+    // OBS not kept = Observation + Recall Ready + Phase 2 not kept
     obsNotKept:(()=>{
       const obs=num(get("Total Number of Observation Not Kept"))||0;
       const rr=num(get("Total Number of Recall Ready Not Kept"))||0;
@@ -541,8 +545,6 @@ function extractMonthData(labelList,hasBonham){
       const total=obs+rr+p2;
       return total>0?total:null;
     })(),
-    obsRescheduled:null,
-    totalNotKeptAll:null,
     totalRec:num(get("Total Treatment Recommended from All Exam Types  (NP/OBS/RR/2 + All TCs)")),
     tcSds,tcTrc,tcTable,
     remote:remote.length?remote:[{location:"Denison",recommended:0,started:0,conversion:0,goal:70},{location:"Gainesville",recommended:0,started:0,conversion:0,goal:70}],
@@ -1140,10 +1142,10 @@ function Dashboard(){
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
                 h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%"+(d.newKeptCount!=null&&d.totalNewExams!=null?" · "+d.newKeptCount+" / "+d.totalNewExams:""))
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched (All Types)"),
                 h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--"),
                 h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               )
@@ -1154,8 +1156,9 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All Types)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (New+OBS)"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--"),
+                h('p',{style:{color:C.muted,fontSize:8,margin:"2px 0 0",fontFamily:F}},"All exam types combined")
               )
             )
           ),
@@ -1787,11 +1790,15 @@ function extractMonthData(labelList,hasBonham){
     newConverted:num(get("Total # of New Exams Converted")),newPending:num(get("Total # of New Exams that went into Pending")),
     newIntoObs:num(get("Total # of New Exams that went into OBS")),obsConverted:num(get("Total # of OBS (OBS/RR/P2) Converted")),
     obsPending:num(get("Total # of OBS (OBS/RR/P2) that went into Pending")),obsStayed:num(get("Total # of OBS (OBS/RR/P2) that stayed in OBS")),
-    // Labels confirmed from sheet scan:
+    // Confirmed exact labels from sheet
+    newKeptCount:num(get("Total Number of New Exams Kept")),
     newNotKept:num(get("Total Number of New Exams Not Kept")),
+    // No separate New/OBS rescheduled - only all-types total exists in sheet
     totalRescheduledAll:num(get("Total Exams (All) Rescheduled")),
     newRescheduled:null,
-    // OBS not kept = sum of all three OBS sub-types
+    obsRescheduled:null,
+    totalNotKeptAll:null,
+    // OBS not kept = Observation + Recall Ready + Phase 2 not kept
     obsNotKept:(()=>{
       const obs=num(get("Total Number of Observation Not Kept"))||0;
       const rr=num(get("Total Number of Recall Ready Not Kept"))||0;
@@ -1799,8 +1806,6 @@ function extractMonthData(labelList,hasBonham){
       const total=obs+rr+p2;
       return total>0?total:null;
     })(),
-    obsRescheduled:null,
-    totalNotKeptAll:null,
     totalRec:num(get("Total Treatment Recommended from All Exam Types  (NP/OBS/RR/2 + All TCs)")),
     tcSds,tcTrc,tcTable,
     remote:remote.length?remote:[{location:"Denison",recommended:0,started:0,conversion:0,goal:70},{location:"Gainesville",recommended:0,started:0,conversion:0,goal:70}],
@@ -2241,10 +2246,10 @@ function Dashboard(){
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
                 h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%"+(d.newKeptCount!=null&&d.totalNewExams!=null?" · "+d.newKeptCount+" / "+d.totalNewExams:""))
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched"),
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched (All Types)"),
                 h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--"),
                 h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               )
@@ -2255,8 +2260,9 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All Types)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (New+OBS)"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--"),
+                h('p',{style:{color:C.muted,fontSize:8,margin:"2px 0 0",fontFamily:F}},"All exam types combined")
               )
             )
           ),
