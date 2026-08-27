@@ -757,7 +757,7 @@ function PinGate({pin,label,storageKey,children}){
 function CollectionsTab({month,allFin,savePending}){
   const COLL_KEY="ao_coll_2026";
   const EMPTY_COLL=()=>({
-    collectionRate:"",starts:"",startProduction:"",adjustedProduction:"",
+    collectionRate:"",
     collectionSummary1:"",sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
     due0_10:"",due11_30:"",due31_60:"",due61_90:"",due90plus:""
   });
@@ -816,9 +816,6 @@ function CollectionsTab({month,allFin,savePending}){
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
         h(Field,{fkey:"collectionRate",label:"Collection Rate %",hint:"e.g. 98.50",prefix:"%",noDollar:true}),
-        h(Field,{fkey:"starts",label:"Starts",noDollar:true,prefix:"#"}),
-        h(Field,{fkey:"startProduction",label:"Start Production"}),
-        h(Field,{fkey:"adjustedProduction",label:"Adjusted Production"}),
         h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
         h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
         h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
@@ -863,9 +860,7 @@ function CollectionsTab({month,allFin,savePending}){
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
         ...[
           {label:"Collection Rate %",val:d.collectionRate?(parseFloat(d.collectionRate).toFixed(2)+"%"):"--",color:C.royal},
-          {label:"Starts",val:d.starts||"--",color:C.blue},
-          {label:"Start Production",val:fmt(d.startProduction),color:C.blue},
-          {label:"Adjusted Production",val:fmt(d.adjustedProduction),color:C.blue},
+
           {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.subtext},
           {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
           {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
@@ -986,13 +981,20 @@ function FinancialTab({month,allFin,setAllFin}){
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Total Starts"),
-          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},ts||"--")
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts"),
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{
+            const fin=allFin[month]||{};
+            const sds=parseInt(fin.totalSameDay||0)||0;
+            const eom=parseInt(fin.eomConverted||0)||0;
+            const pend=parseInt(fin.pendingStarts||0)||0;
+            const ded=parseInt(fin.deductions||0)||0;
+            const total=sds+eom+pend-ded;
+            return total>0?total:(ts||"--");
+          })())
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Above Minimum $2,980"),
-          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--"),
-          sam>0&&ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--")
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
@@ -2157,13 +2159,20 @@ function FinancialTab({month,allFin,setAllFin}){
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Total Starts"),
-          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},ts||"--")
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts"),
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{
+            const fin=allFin[month]||{};
+            const sds=parseInt(fin.totalSameDay||0)||0;
+            const eom=parseInt(fin.eomConverted||0)||0;
+            const pend=parseInt(fin.pendingStarts||0)||0;
+            const ded=parseInt(fin.deductions||0)||0;
+            const total=sds+eom+pend-ded;
+            return total>0?total:(ts||"--");
+          })())
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Above Minimum $2,980"),
-          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--"),
-          sam>0&&ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--")
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
