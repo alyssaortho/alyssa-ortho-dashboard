@@ -965,7 +965,38 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
 }
-function SH({label,color,month}){return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},h('div',{style:{width:4,height:28,background:color,borderRadius:4}}),h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`));}
+function SH({label,color,month}){
+  const SK="ao_updated_"+month;
+  const [val,setVal]=useState(()=>{try{return localStorage.getItem(SK)||"";}catch(e){return "";}});
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(val);
+  const commit=()=>{
+    setVal(draft);setEditing(false);
+    try{localStorage.setItem(SK,draft);}catch(e){}
+  };
+  return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24,flexWrap:"wrap"}},
+    h('div',{style:{width:4,height:28,background:color,borderRadius:4,flexShrink:0}}),
+    h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),
+    h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`),
+    h('div',{style:{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}},
+      editing
+        ?h('div',{style:{display:"flex",alignItems:"center",gap:6}},
+            h('span',{style:{color:C.muted,fontSize:11,fontFamily:F,whiteSpace:"nowrap"}},"Last Updated:"),
+            h('input',{type:"text",value:draft,onChange:function(e){setDraft(e.target.value);},
+              onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+              autoFocus:true,placeholder:"e.g. 8/27/26",
+              style:{border:"1px solid "+C.border,borderRadius:6,padding:"4px 10px",fontSize:12,fontFamily:F,width:110,outline:"none",background:C.panelAlt,color:C.text}}),
+            h('button',{onClick:commit,style:{background:C.royal,color:C.white,border:"none",borderRadius:5,padding:"4px 10px",fontSize:11,fontFamily:F,cursor:"pointer"}},"Save"),
+            h('button',{onClick:function(){setEditing(false);},style:{background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,padding:"4px 8px",fontSize:11,fontFamily:F,cursor:"pointer"}},"✕")
+          )
+        :h('div',{style:{display:"flex",alignItems:"center",gap:6,background:C.panelAlt,border:"1px solid "+C.border,borderRadius:7,padding:"5px 12px",cursor:"pointer"},onClick:function(){setDraft(val);setEditing(true);}},
+            h('span',{style:{color:C.muted,fontSize:10,fontFamily:F,textTransform:"uppercase",letterSpacing:"0.08em"}},"Last Updated:"),
+            h('span',{style:{color:val?C.text:C.muted,fontSize:11,fontWeight:val?600:400,fontFamily:F,minWidth:60}},val||"click to set"),
+            h('span',{style:{color:C.muted,fontSize:10,fontFamily:F}},"✏")
+          )
+    )
+  );
+}
 
 function Dashboard(){
   const [month,setMonth]=useState(CURRENT_MONTH);
@@ -2069,7 +2100,38 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
 }
-function SH({label,color,month}){return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},h('div',{style:{width:4,height:28,background:color,borderRadius:4}}),h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`));}
+function SH({label,color,month}){
+  const SK="ao_updated_"+month;
+  const [val,setVal]=useState(()=>{try{return localStorage.getItem(SK)||"";}catch(e){return "";}});
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(val);
+  const commit=()=>{
+    setVal(draft);setEditing(false);
+    try{localStorage.setItem(SK,draft);}catch(e){}
+  };
+  return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24,flexWrap:"wrap"}},
+    h('div',{style:{width:4,height:28,background:color,borderRadius:4,flexShrink:0}}),
+    h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),
+    h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`),
+    h('div',{style:{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}},
+      editing
+        ?h('div',{style:{display:"flex",alignItems:"center",gap:6}},
+            h('span',{style:{color:C.muted,fontSize:11,fontFamily:F,whiteSpace:"nowrap"}},"Last Updated:"),
+            h('input',{type:"text",value:draft,onChange:function(e){setDraft(e.target.value);},
+              onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+              autoFocus:true,placeholder:"e.g. 8/27/26",
+              style:{border:"1px solid "+C.border,borderRadius:6,padding:"4px 10px",fontSize:12,fontFamily:F,width:110,outline:"none",background:C.panelAlt,color:C.text}}),
+            h('button',{onClick:commit,style:{background:C.royal,color:C.white,border:"none",borderRadius:5,padding:"4px 10px",fontSize:11,fontFamily:F,cursor:"pointer"}},"Save"),
+            h('button',{onClick:function(){setEditing(false);},style:{background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,padding:"4px 8px",fontSize:11,fontFamily:F,cursor:"pointer"}},"✕")
+          )
+        :h('div',{style:{display:"flex",alignItems:"center",gap:6,background:C.panelAlt,border:"1px solid "+C.border,borderRadius:7,padding:"5px 12px",cursor:"pointer"},onClick:function(){setDraft(val);setEditing(true);}},
+            h('span',{style:{color:C.muted,fontSize:10,fontFamily:F,textTransform:"uppercase",letterSpacing:"0.08em"}},"Last Updated:"),
+            h('span',{style:{color:val?C.text:C.muted,fontSize:11,fontWeight:val?600:400,fontFamily:F,minWidth:60}},val||"click to set"),
+            h('span',{style:{color:C.muted,fontSize:10,fontFamily:F}},"✏")
+          )
+    )
+  );
+}
 
 function Dashboard(){
   const [month,setMonth]=useState(CURRENT_MONTH);
