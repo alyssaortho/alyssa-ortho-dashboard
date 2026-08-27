@@ -1011,6 +1011,11 @@ function SH({label,color,month,section}){
   const [val,setVal]=useState(()=>{try{return localStorage.getItem(SK)||"";}catch(e){return "";}});
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(val);
+  // Re-read from localStorage whenever the key changes (tab or month switch)
+  useEffect(()=>{
+    try{const stored=localStorage.getItem(SK)||"";setVal(stored);setDraft(stored);}catch(e){}
+    setEditing(false);
+  },[SK]);
   const commit=()=>{
     setVal(draft);setEditing(false);
     try{localStorage.setItem(SK,draft);}catch(e){}
@@ -2189,6 +2194,11 @@ function SH({label,color,month,section}){
   const [val,setVal]=useState(()=>{try{return localStorage.getItem(SK)||"";}catch(e){return "";}});
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(val);
+  // Re-read from localStorage whenever the key changes (tab or month switch)
+  useEffect(()=>{
+    try{const stored=localStorage.getItem(SK)||"";setVal(stored);setDraft(stored);}catch(e){}
+    setEditing(false);
+  },[SK]);
   const commit=()=>{
     setVal(draft);setEditing(false);
     try{localStorage.setItem(SK,draft);}catch(e){}
