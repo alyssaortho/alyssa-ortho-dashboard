@@ -857,18 +857,33 @@ function CollectionsTab({month,allFin,savePending}){
       h("p",{style:{color:C.muted,fontSize:16,fontFamily:F}},"No collections data for "+month+" yet"),
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F,cursor:"pointer"}},"＋ Enter Data")
     ):h("div",null,
-      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
-        ...[
-          {label:"Collection Rate %",val:d.collectionRate?(parseFloat(d.collectionRate).toFixed(2)+"%"):"--",color:C.royal},
-
-          {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.subtext},
-          {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
-          {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
-          {label:"Collection Total",val:fmt(d.collectionTotal),color:C.green},
-        ].map(function(item){return h("div",{key:item.label,style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+item.color,borderRadius:10,padding:"20px 22px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},item.label),
-          h("p",{style:{color:item.val==="--"?C.muted:item.color,fontSize:30,fontWeight:900,margin:0,fontFamily:F}},item.val)
-        );})
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:16}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.royal,borderRadius:10,padding:"24px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",display:"flex",flexDirection:"column",justifyContent:"center"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Rate"),
+          h("p",{style:{color:d.collectionRate?C.royal:C.muted,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},d.collectionRate?(parseFloat(d.collectionRate).toFixed(2)+"%"):"--")
+        ),
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.green,borderRadius:10,padding:"24px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",display:"flex",flexDirection:"column",justifyContent:"center"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Total"),
+          h("p",{style:{color:d.collectionTotal?C.green:C.muted,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},fmt(d.collectionTotal)),
+          h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0"}},"Summary + Sunbit Deposit − Sunbit Production")
+        )
+      ),
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:24}},
+        h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderRadius:8,padding:"14px 16px"}},
+          h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Collection Summary"),
+          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Before adjustments"),
+          h("p",{style:{color:d.collectionSummary1?C.text:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.collectionSummary1))
+        ),
+        h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"14px 16px"}},
+          h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Sunbit Production"),
+          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Deducted from summary"),
+          h("p",{style:{color:d.sunbitProduction?C.orange:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.sunbitProduction))
+        ),
+        h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.green,borderRadius:8,padding:"14px 16px"}},
+          h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Sunbit Deposit"),
+          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Added after fees"),
+          h("p",{style:{color:d.sunbitDeposit?C.green:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.sunbitDeposit))
+        )
       ),
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:18}},
