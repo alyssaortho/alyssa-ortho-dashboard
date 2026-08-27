@@ -1169,20 +1169,19 @@ function Dashboard(){
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}},
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll,large:true}),
+          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85,large:true})
+        ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"NEW EXAMS"),
             h('p',{style:{color:C.blue,fontSize:48,fontWeight:900,margin:"0 0 10px",fontFamily:F}},d.totalNewExams??"--"),
-            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
                 h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--"),
                 h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%"+(d.newKeptCount!=null&&d.totalNewExams!=null?" · "+d.newKeptCount+" / "+d.totalNewExams:""))
-              ),
-              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched (All Types)"),
-                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
@@ -1191,32 +1190,25 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (New+OBS)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--"),
-                h('p',{style:{color:C.muted,fontSize:8,margin:"2px 0 0",fontFamily:F}},"All exam types combined")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
               )
             )
           ),
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"OBS / RR / P2"),
             h('p',{style:{color:C.teal,fontSize:48,fontWeight:900,margin:"0 0 10px",fontFamily:F}},d.totalObsCompleted??"--"),
-            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
                 h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
-              ),
-              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"vs Goal"),
-                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},
-                  d.obsKeptAll!=null?((d.obsKeptAll-85)>=0?"+":"")+((d.obsKeptAll-85).toFixed(1))+"%":"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%  "+(d.obsKeptAll!=null?((d.obsKeptAll-85)>=0?"▲":"▼")+Math.abs(d.obsKeptAll-85).toFixed(1)+"%":""))
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
-                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
-
+                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
@@ -1224,10 +1216,6 @@ function Dashboard(){
               )
             )
           )
-        ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
-          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
-          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
           h(KpiCard,{label:"New Exam Kept — All",value:d.newExamKeptAll,goal:85}),
@@ -2308,20 +2296,19 @@ function Dashboard(){
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}},
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll,large:true}),
+          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85,large:true})
+        ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"NEW EXAMS"),
             h('p',{style:{color:C.blue,fontSize:48,fontWeight:900,margin:"0 0 10px",fontFamily:F}},d.totalNewExams??"--"),
-            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
                 h('p',{style:{color:d.newExamKeptAll!=null?accent(d.newExamKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.newExamKeptAll!=null?d.newExamKeptAll+"%":"--"),
                 h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%"+(d.newKeptCount!=null&&d.totalNewExams!=null?" · "+d.newKeptCount+" / "+d.totalNewExams:""))
-              ),
-              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept w/ Resched (All Types)"),
-                h('p',{style:{color:d.examKeptResched!=null?accent(d.examKeptResched,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.examKeptResched!=null?d.examKeptResched+"%":"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
@@ -2330,32 +2317,25 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (New+OBS)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--"),
-                h('p',{style:{color:C.muted,fontSize:8,margin:"2px 0 0",fontFamily:F}},"All exam types combined")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
               )
             )
           ),
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"OBS / RR / P2"),
             h('p',{style:{color:C.teal,fontSize:48,fontWeight:900,margin:"0 0 10px",fontFamily:F}},d.totalObsCompleted??"--"),
-            h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+            h('div',{style:{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Kept Rate"),
                 h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},d.obsKeptAll!=null?d.obsKeptAll+"%":"--"),
-                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%")
-              ),
-              h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"10px 12px",border:"1px solid "+C.border}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 3px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"vs Goal"),
-                h('p',{style:{color:d.obsKeptAll!=null?accent(d.obsKeptAll,85):C.muted,fontSize:26,fontWeight:900,margin:0,fontFamily:F}},
-                  d.obsKeptAll!=null?((d.obsKeptAll-85)>=0?"+":"")+((d.obsKeptAll-85).toFixed(1))+"%":"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"3px 0 0",fontFamily:F}},"Goal 85%  "+(d.obsKeptAll!=null?((d.obsKeptAll-85)>=0?"▲":"▼")+Math.abs(d.obsKeptAll-85).toFixed(1)+"%":""))
               )
             ),
             h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Not Kept"),
-                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--"),
-
+                h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
                 h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
@@ -2363,10 +2343,6 @@ function Dashboard(){
               )
             )
           )
-        ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
-          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
-          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
           h(KpiCard,{label:"New Exam Kept — All",value:d.newExamKeptAll,goal:85}),
