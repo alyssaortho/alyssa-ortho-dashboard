@@ -1167,19 +1167,12 @@ function Dashboard(){
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
             h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-            h(Donut,{data:(()=>{
-  const total=d.totalNewCompleted||0;
-  const conv=Math.min(d.newConverted??0,total);
-  const pend=Math.min(d.newPending??0,total-conv);
-  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
-  const notKept=Math.max(0,total-conv-pend-obs);
-  return [
-    {name:"Converted",value:conv,color:C.green},
-    {name:"Pending",value:pend,color:C.orange},
-    {name:"Into OBS",value:obs,color:C.silver},
-    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
-  ].filter(d=>d.value>0);
-})(),title:"NEW EXAM OUTCOMES"}),
+            h(Donut,{data:[
+  {name:"Converted",value:d.newConverted??0,color:C.green},
+  {name:"Pending",value:d.newPending??0,color:C.orange},
+  {name:"Into OBS",value:d.newIntoObs??0,color:C.silver},
+  {name:"Not Kept",value:d.newNotKept??0,color:C.orange}
+].filter(x=>x.value>0),title:"NEW EXAM OUTCOMES"}),
             h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
           )
         )
@@ -1288,19 +1281,12 @@ function Dashboard(){
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:20}},
           h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-          h(Donut,{data:(()=>{
-  const total=d.totalNewCompleted||0;
-  const conv=Math.min(d.newConverted??0,total);
-  const pend=Math.min(d.newPending??0,total-conv);
-  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
-  const notKept=Math.max(0,total-conv-pend-obs);
-  return [
-    {name:"Converted",value:conv,color:C.green},
-    {name:"Pending",value:pend,color:C.orange},
-    {name:"Into OBS",value:obs,color:C.silver},
-    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
-  ].filter(d=>d.value>0);
-})(),title:"NEW EXAM OUTCOMES"}),
+          h(Donut,{data:[
+  {name:"Converted",value:d.newConverted??0,color:C.green},
+  {name:"Pending",value:d.newPending??0,color:C.orange},
+  {name:"Into OBS",value:d.newIntoObs??0,color:C.silver},
+  {name:"Not Kept",value:d.newNotKept??0,color:C.orange}
+].filter(x=>x.value>0),title:"NEW EXAM OUTCOMES"}),
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
             ),
@@ -2353,19 +2339,12 @@ function Dashboard(){
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
             h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-            h(Donut,{data:(()=>{
-  const total=d.totalNewCompleted||0;
-  const conv=Math.min(d.newConverted??0,total);
-  const pend=Math.min(d.newPending??0,total-conv);
-  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
-  const notKept=Math.max(0,total-conv-pend-obs);
-  return [
-    {name:"Converted",value:conv,color:C.green},
-    {name:"Pending",value:pend,color:C.orange},
-    {name:"Into OBS",value:obs,color:C.silver},
-    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
-  ].filter(d=>d.value>0);
-})(),title:"NEW EXAM OUTCOMES"}),
+            h(Donut,{data:[
+  {name:"Converted",value:d.newConverted??0,color:C.green},
+  {name:"Pending",value:d.newPending??0,color:C.orange},
+  {name:"Into OBS",value:d.newIntoObs??0,color:C.silver},
+  {name:"Not Kept",value:d.newNotKept??0,color:C.orange}
+].filter(x=>x.value>0),title:"NEW EXAM OUTCOMES"}),
             h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
           )
         )
@@ -2474,19 +2453,12 @@ function Dashboard(){
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:20}},
           h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-          h(Donut,{data:(()=>{
-  const total=d.totalNewCompleted||0;
-  const conv=Math.min(d.newConverted??0,total);
-  const pend=Math.min(d.newPending??0,total-conv);
-  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
-  const notKept=Math.max(0,total-conv-pend-obs);
-  return [
-    {name:"Converted",value:conv,color:C.green},
-    {name:"Pending",value:pend,color:C.orange},
-    {name:"Into OBS",value:obs,color:C.silver},
-    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
-  ].filter(d=>d.value>0);
-})(),title:"NEW EXAM OUTCOMES"}),
+          h(Donut,{data:[
+  {name:"Converted",value:d.newConverted??0,color:C.green},
+  {name:"Pending",value:d.newPending??0,color:C.orange},
+  {name:"Into OBS",value:d.newIntoObs??0,color:C.silver},
+  {name:"Not Kept",value:d.newNotKept??0,color:C.orange}
+].filter(x=>x.value>0),title:"NEW EXAM OUTCOMES"}),
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
             ),
