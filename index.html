@@ -781,7 +781,7 @@ function CollectionsTab({month,allFin,savePending}){
   );
 
   if(editing)return h("div",null,
-    h(SH,{label:"Collections — Data Entry",color:C.green,month:month}),
+    h(SH,{label:"Collections — Data Entry",color:C.green,month:month,section:"collections"}),
     h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,maxWidth:900}},
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
@@ -818,7 +818,7 @@ function CollectionsTab({month,allFin,savePending}){
 
   // Display view
   return h("div",null,
-    h(SH,{label:"Collections",color:C.green,month:month}),
+    h(SH,{label:"Collections",color:C.green,month:month,section:"collections"}),
     h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:16}},
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:12,fontWeight:700,fontFamily:F,cursor:"pointer"}},d?"✏ Edit Data":"＋ Enter Data")
     ),
@@ -901,7 +901,7 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
   if(editing)return h("div",null,
-    h(SH,{label:"Financial - Data Entry",color:C.green,month:month}),
+    h(SH,{label:"Financial - Data Entry",color:C.green,month:month,section:"financial"}),
     h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"32px 36px",maxWidth:580,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
       h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"0 0 24px",letterSpacing:"0.06em",textTransform:"uppercase"}},"Enter figures from OrthoFi Reports"),
       ...[
@@ -925,7 +925,7 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
   return h("div",null,
-    h(SH,{label:"Financial Overview",color:C.green,month:month}),
+    h(SH,{label:"Financial Overview",color:C.green,month:month,section:"financial"}),
     h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:16}},
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:12,fontWeight:700,fontFamily:F,cursor:"pointer"}},d?"Edit Data":"+ Enter Data")
     ),
@@ -969,8 +969,8 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
 }
-function SH({label,color,month}){
-  const SK="ao_updated_"+month;
+function SH({label,color,month,section}){
+  const SK="ao_updated_"+(section||label.toLowerCase().replace(/\s+/g,"_"))+"_"+month;
   const [val,setVal]=useState(()=>{try{return localStorage.getItem(SK)||"";}catch(e){return "";}});
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(val);
@@ -1106,7 +1106,7 @@ function Dashboard(){
     ),
     !loading&&d&&h('div',{style:{padding:"32px 36px",maxWidth:1500}},
       section==="overview"&&h('div',null,
-        h(SH,{label:"KPIs",color:C.blue,month}),
+        h(SH,{label:"KPIs",color:C.blue,month,section:"kpis"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
           h(StartsCard,{month,d,allFin,savePending}),
           h(RGCard,{month,allFin,savePending}),
@@ -1138,7 +1138,7 @@ function Dashboard(){
       ),
       section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
         h('div',null,
-        h(SH,{label:"TC Performance",color:C.orange,month}),
+        h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
         d.tcTable.length?h(Fragment,null,
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
             h(GoalBar,{title:"SDS% PER TC — GOAL: 50%",height:220,data:d.tcSds.map(r=>({label:r.label,value:r.value,goal:r.goal}))}),
@@ -1168,7 +1168,7 @@ function Dashboard(){
       )
       ),
       section==="exams"&&h('div',null,
-        h(SH,{label:"Exam Outcomes",color:C.teal,month}),
+        h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"NEW EXAMS"),
@@ -1254,7 +1254,7 @@ function Dashboard(){
       section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
             section==="trends"&&h('div',null,
-        h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
+        h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026",section:"trends"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
           h(TrendBar,{allData,metricKey:"totalNewExams",goal:null,label:"TOTAL NEW EXAMS",isCount:true}),
           h(TrendBar,{allData,metricKey:"totalObsCompleted",goal:null,label:"TOTAL OBS",isCount:true}),
@@ -2040,7 +2040,7 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
   if(editing)return h("div",null,
-    h(SH,{label:"Financial - Data Entry",color:C.green,month:month}),
+    h(SH,{label:"Financial - Data Entry",color:C.green,month:month,section:"financial"}),
     h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"32px 36px",maxWidth:580,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
       h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"0 0 24px",letterSpacing:"0.06em",textTransform:"uppercase"}},"Enter figures from OrthoFi Reports"),
       ...[
@@ -2064,7 +2064,7 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
   return h("div",null,
-    h(SH,{label:"Financial Overview",color:C.green,month:month}),
+    h(SH,{label:"Financial Overview",color:C.green,month:month,section:"financial"}),
     h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:16}},
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:12,fontWeight:700,fontFamily:F,cursor:"pointer"}},d?"Edit Data":"+ Enter Data")
     ),
@@ -2108,8 +2108,8 @@ function FinancialTab({month,allFin,setAllFin}){
     )
   );
 }
-function SH({label,color,month}){
-  const SK="ao_updated_"+month;
+function SH({label,color,month,section}){
+  const SK="ao_updated_"+(section||label.toLowerCase().replace(/\s+/g,"_"))+"_"+month;
   const [val,setVal]=useState(()=>{try{return localStorage.getItem(SK)||"";}catch(e){return "";}});
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(val);
@@ -2245,7 +2245,7 @@ function Dashboard(){
     ),
     !loading&&d&&h('div',{style:{padding:"32px 36px",maxWidth:1500}},
       section==="overview"&&h('div',null,
-        h(SH,{label:"KPIs",color:C.blue,month}),
+        h(SH,{label:"KPIs",color:C.blue,month,section:"kpis"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
           h(StartsCard,{month,d,allFin,savePending}),
           h(RGCard,{month,allFin,savePending}),
@@ -2277,7 +2277,7 @@ function Dashboard(){
       ),
       section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
         h('div',null,
-        h(SH,{label:"TC Performance",color:C.orange,month}),
+        h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
         d.tcTable.length?h(Fragment,null,
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
             h(GoalBar,{title:"SDS% PER TC — GOAL: 50%",height:220,data:d.tcSds.map(r=>({label:r.label,value:r.value,goal:r.goal}))}),
@@ -2307,7 +2307,7 @@ function Dashboard(){
       )
       ),
       section==="exams"&&h('div',null,
-        h(SH,{label:"Exam Outcomes",color:C.teal,month}),
+        h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 6px",fontFamily:F}},"NEW EXAMS"),
@@ -2393,7 +2393,7 @@ function Dashboard(){
       section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
             section==="trends"&&h('div',null,
-        h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026"}),
+        h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026",section:"trends"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
           h(TrendBar,{allData,metricKey:"totalNewExams",goal:null,label:"TOTAL NEW EXAMS",isCount:true}),
           h(TrendBar,{allData,metricKey:"totalObsCompleted",goal:null,label:"TOTAL OBS",isCount:true}),
