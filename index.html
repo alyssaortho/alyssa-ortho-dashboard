@@ -1140,6 +1140,14 @@ function Dashboard(){
         h('div',null,
         h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
         d.tcTable.length?h(Fragment,null,
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+            h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
+            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true})
+          ),
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
+            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
+            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
+          ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
             h(GoalBar,{title:"SDS% PER TC — GOAL: 50%",height:220,data:d.tcSds.map(r=>({label:r.label,value:r.value,goal:r.goal}))}),
             h(GoalBar,{title:"TRC% PER TC — GOAL: 70%",height:220,data:d.tcTrc.map(r=>({label:r.label,value:r.value,goal:r.goal}))})
@@ -1153,13 +1161,9 @@ function Dashboard(){
               )
             )
           ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginTop:22,marginBottom:22}},
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:22}},
             h(GoalBar,{title:"EOM TRC — NEW EXAMS BY LOCATION",data:[{label:"Denison",value:d.eomNewDenison,goal:70},{label:"Gainesville",value:d.eomNewGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomNewBonham,goal:70}]:[])]}),
             h(GoalBar,{title:"EOM TRC — OBS BY LOCATION",data:[{label:"Denison",value:d.eomObsDenison,goal:70},{label:"Gainesville",value:d.eomObsGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomObsBonham,goal:70}]:[])]})
-          ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:22}},
-            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
-            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
@@ -2267,6 +2271,14 @@ function Dashboard(){
         h('div',null,
         h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
         d.tcTable.length?h(Fragment,null,
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+            h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
+            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true})
+          ),
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
+            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
+            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
+          ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
             h(GoalBar,{title:"SDS% PER TC — GOAL: 50%",height:220,data:d.tcSds.map(r=>({label:r.label,value:r.value,goal:r.goal}))}),
             h(GoalBar,{title:"TRC% PER TC — GOAL: 70%",height:220,data:d.tcTrc.map(r=>({label:r.label,value:r.value,goal:r.goal}))})
@@ -2280,13 +2292,9 @@ function Dashboard(){
               )
             )
           ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginTop:22,marginBottom:22}},
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:22}},
             h(GoalBar,{title:"EOM TRC — NEW EXAMS BY LOCATION",data:[{label:"Denison",value:d.eomNewDenison,goal:70},{label:"Gainesville",value:d.eomNewGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomNewBonham,goal:70}]:[])]}),
             h(GoalBar,{title:"EOM TRC — OBS BY LOCATION",data:[{label:"Denison",value:d.eomObsDenison,goal:70},{label:"Gainesville",value:d.eomObsGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomObsBonham,goal:70}]:[])]})
-          ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:22}},
-            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
-            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
             d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
