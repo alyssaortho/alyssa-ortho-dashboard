@@ -628,6 +628,36 @@ function TrendBar({allData,metricKey,goal,label,isCount}){
   );
 }
 
+function RGPctCard({month,allFin,savePending}){
+  const rgPct=allFin[month]?.rgPct!=null?parseFloat(allFin[month].rgPct)||0:null;
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(String(rgPct??""));
+  const commit=()=>{
+    savePending(month,null,{...(allFin[month]||{}),rgPct:draft});
+    setEditing(false);
+  };
+  const col=rgPct!=null?accent(rgPct,0):C.purple;
+  return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h("p",{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG%"),
+    h("p",{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},rgPct!=null?rgPct.toFixed(1)+"%":"--"),
+    h("div",{style:{marginTop:8}},
+      editing
+        ?h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+            h("input",{type:"number",min:"0",max:"100",step:"0.1",value:draft,
+              onChange:function(e){setDraft(e.target.value);},
+              onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+              autoFocus:true,
+              style:{width:64,padding:"4px 8px",fontSize:14,border:"1px solid "+C.border,borderRadius:5,fontFamily:F,background:C.panelAlt,color:C.text,outline:"none"}}),
+            h("span",{style:{color:C.muted,fontSize:13,fontFamily:F}},"%"),
+            h("button",{onClick:commit,style:{fontSize:11,padding:"4px 12px",background:C.royal,color:C.white,border:"none",borderRadius:5,cursor:"pointer",fontFamily:F}},"Save"),
+            h("button",{onClick:function(){setEditing(false);},style:{fontSize:11,padding:"4px 8px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,cursor:"pointer",fontFamily:F}},"✕")
+          )
+        :h("button",{onClick:function(){setDraft(String(rgPct??""));setEditing(true);},
+            style:{fontSize:11,padding:"5px 14px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,cursor:"pointer",fontFamily:F}},
+            rgPct!=null?"✏ Edit":"+ Enter %")
+    )
+  );
+}
 function RGCard({month,allFin,savePending}){
   const rgVal=allFin[month]?.rgCount!=null?parseInt(allFin[month].rgCount)||0:null;
   const [editing,setEditing]=useState(false);
@@ -727,8 +757,8 @@ function PinGate({pin,label,storageKey,children}){
 function CollectionsTab({month,allFin,savePending}){
   const COLL_KEY="ao_coll_2026";
   const EMPTY_COLL=()=>({
-    collectionRate:"",collectionSummary1:"",
-    sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
+    collectionRate:"",starts:"",startProduction:"",adjustedProduction:"",
+    collectionSummary1:"",sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
     due0_10:"",due11_30:"",due31_60:"",due61_90:"",due90plus:""
   });
   const [unlocked,setUnlocked]=useState(()=>{try{return sessionStorage.getItem("coll_unlocked")==="1";}catch(e){return false;}});
@@ -786,6 +816,9 @@ function CollectionsTab({month,allFin,savePending}){
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
         h(Field,{fkey:"collectionRate",label:"Collection Rate %",hint:"e.g. 98.50",prefix:"%",noDollar:true}),
+        h(Field,{fkey:"starts",label:"Starts",noDollar:true,prefix:"#"}),
+        h(Field,{fkey:"startProduction",label:"Start Production"}),
+        h(Field,{fkey:"adjustedProduction",label:"Adjusted Production"}),
         h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
         h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
         h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
@@ -830,7 +863,10 @@ function CollectionsTab({month,allFin,savePending}){
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
         ...[
           {label:"Collection Rate %",val:d.collectionRate?(parseFloat(d.collectionRate).toFixed(2)+"%"):"--",color:C.royal},
-          {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.blue},
+          {label:"Starts",val:d.starts||"--",color:C.blue},
+          {label:"Start Production",val:fmt(d.startProduction),color:C.blue},
+          {label:"Adjusted Production",val:fmt(d.adjustedProduction),color:C.blue},
+          {label:"Collection Summary",val:fmt(d.collectionSummary1),color:C.subtext},
           {label:"Sunbit Production",val:fmt(d.sunbitProduction),color:C.teal},
           {label:"Sunbit Deposit (after fees)",val:fmt(d.sunbitDeposit),color:C.teal},
           {label:"Collection Total",val:fmt(d.collectionTotal),color:C.green},
@@ -1131,7 +1167,19 @@ function Dashboard(){
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
             h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-            h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+            h(Donut,{data:(()=>{
+  const total=d.totalNewCompleted||0;
+  const conv=Math.min(d.newConverted??0,total);
+  const pend=Math.min(d.newPending??0,total-conv);
+  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
+  const notKept=Math.max(0,total-conv-pend-obs);
+  return [
+    {name:"Converted",value:conv,color:C.green},
+    {name:"Pending",value:pend,color:C.orange},
+    {name:"Into OBS",value:obs,color:C.silver},
+    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
+  ].filter(d=>d.value>0);
+})(),title:"NEW EXAM OUTCOMES"}),
             h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
           )
         )
@@ -1140,9 +1188,10 @@ function Dashboard(){
         h('div',null,
         h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
         d.tcTable.length?h(Fragment,null,
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}},
             h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
-            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true})
+            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true}),
+            h(RGPctCard,{month,allFin,savePending})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
             h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
@@ -1239,7 +1288,19 @@ function Dashboard(){
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:20}},
           h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-          h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+          h(Donut,{data:(()=>{
+  const total=d.totalNewCompleted||0;
+  const conv=Math.min(d.newConverted??0,total);
+  const pend=Math.min(d.newPending??0,total-conv);
+  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
+  const notKept=Math.max(0,total-conv-pend-obs);
+  return [
+    {name:"Converted",value:conv,color:C.green},
+    {name:"Pending",value:pend,color:C.orange},
+    {name:"Into OBS",value:obs,color:C.silver},
+    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
+  ].filter(d=>d.value>0);
+})(),title:"NEW EXAM OUTCOMES"}),
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
             ),
@@ -1916,6 +1977,36 @@ function TrendBar({allData,metricKey,goal,label,isCount}){
   );
 }
 
+function RGPctCard({month,allFin,savePending}){
+  const rgPct=allFin[month]?.rgPct!=null?parseFloat(allFin[month].rgPct)||0:null;
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(String(rgPct??""));
+  const commit=()=>{
+    savePending(month,null,{...(allFin[month]||{}),rgPct:draft});
+    setEditing(false);
+  };
+  const col=rgPct!=null?accent(rgPct,0):C.purple;
+  return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"24px 22px 18px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h("p",{style:{color:C.subtext,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG%"),
+    h("p",{style:{color:C.purple,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},rgPct!=null?rgPct.toFixed(1)+"%":"--"),
+    h("div",{style:{marginTop:8}},
+      editing
+        ?h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+            h("input",{type:"number",min:"0",max:"100",step:"0.1",value:draft,
+              onChange:function(e){setDraft(e.target.value);},
+              onKeyDown:function(e){if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);},
+              autoFocus:true,
+              style:{width:64,padding:"4px 8px",fontSize:14,border:"1px solid "+C.border,borderRadius:5,fontFamily:F,background:C.panelAlt,color:C.text,outline:"none"}}),
+            h("span",{style:{color:C.muted,fontSize:13,fontFamily:F}},"%"),
+            h("button",{onClick:commit,style:{fontSize:11,padding:"4px 12px",background:C.royal,color:C.white,border:"none",borderRadius:5,cursor:"pointer",fontFamily:F}},"Save"),
+            h("button",{onClick:function(){setEditing(false);},style:{fontSize:11,padding:"4px 8px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,cursor:"pointer",fontFamily:F}},"✕")
+          )
+        :h("button",{onClick:function(){setDraft(String(rgPct??""));setEditing(true);},
+            style:{fontSize:11,padding:"5px 14px",background:"none",color:C.muted,border:"1px solid "+C.border,borderRadius:5,cursor:"pointer",fontFamily:F}},
+            rgPct!=null?"✏ Edit":"+ Enter %")
+    )
+  );
+}
 function RGCard({month,allFin,savePending}){
   const rgVal=allFin[month]?.rgCount!=null?parseInt(allFin[month].rgCount)||0:null;
   const [editing,setEditing]=useState(false);
@@ -2262,7 +2353,19 @@ function Dashboard(){
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
             h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-            h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+            h(Donut,{data:(()=>{
+  const total=d.totalNewCompleted||0;
+  const conv=Math.min(d.newConverted??0,total);
+  const pend=Math.min(d.newPending??0,total-conv);
+  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
+  const notKept=Math.max(0,total-conv-pend-obs);
+  return [
+    {name:"Converted",value:conv,color:C.green},
+    {name:"Pending",value:pend,color:C.orange},
+    {name:"Into OBS",value:obs,color:C.silver},
+    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
+  ].filter(d=>d.value>0);
+})(),title:"NEW EXAM OUTCOMES"}),
             h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
           )
         )
@@ -2271,9 +2374,10 @@ function Dashboard(){
         h('div',null,
         h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
         d.tcTable.length?h(Fragment,null,
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}},
             h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
-            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true})
+            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true}),
+            h(RGPctCard,{month,allFin,savePending})
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
             h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
@@ -2370,7 +2474,19 @@ function Dashboard(){
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:20}},
           h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-          h(Donut,{data:[{name:"Converted",value:d.newConverted??0,color:C.green},{name:"Pending",value:d.newPending??0,color:C.orange},{name:"Into OBS",value:d.newIntoObs??0,color:C.silver}],title:"NEW EXAM OUTCOMES"}),
+          h(Donut,{data:(()=>{
+  const total=d.totalNewCompleted||0;
+  const conv=Math.min(d.newConverted??0,total);
+  const pend=Math.min(d.newPending??0,total-conv);
+  const obs=Math.min(d.newIntoObs??0,total-conv-pend);
+  const notKept=Math.max(0,total-conv-pend-obs);
+  return [
+    {name:"Converted",value:conv,color:C.green},
+    {name:"Pending",value:pend,color:C.orange},
+    {name:"Into OBS",value:obs,color:C.silver},
+    ...(notKept>0?[{name:"Not Kept",value:notKept,color:C.border}]:[])
+  ].filter(d=>d.value>0);
+})(),title:"NEW EXAM OUTCOMES"}),
           h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
             ),
