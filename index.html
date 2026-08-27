@@ -326,22 +326,26 @@ const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,Refere
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
 // Practice Performance data entered manually via Financial tab
 const SHEET_TABS=[
-  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7},
-  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7},
-  {key:"March",tab:"March '26",hasBonham:false,examRow:8},
-  {key:"April",tab:"April '26",hasBonham:false,examRow:8},
-  {key:"May",tab:"May '26",hasBonham:true,examRow:8},
-  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8},
-  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8},
-  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8},
-  {key:"September",tab:"Sep '26",hasBonham:true,examRow:8},
-  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8},
-  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8},
-  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8},
+  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
+  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7,mo:1},
+  {key:"March",tab:"March '26",hasBonham:false,examRow:8,mo:2},
+  {key:"April",tab:"April '26",hasBonham:false,examRow:8,mo:3},
+  {key:"May",tab:"May '26",hasBonham:true,examRow:8,mo:4},
+  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8,mo:5},
+  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8,mo:6},
+  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8,mo:7},
+  {key:"September",tab:"Sep '26",hasBonham:true,examRow:8,mo:8},
+  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8,mo:9},
+  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8,mo:10},
+  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8,mo:11},
 ];
 const MONTH_KEYS=SHEET_TABS.map(s=>s.key);
-// Auto-detect current month for default tab
-const CURRENT_MONTH=(()=>{const mo=new Date().getMonth();return ["January","February","March","April","May","June","July","August","September","October","November","December"][mo];})();
+// Current month index (0=Jan)
+const NOW_MO=new Date().getMonth();
+const NOW_YR=new Date().getFullYear();
+// Only fetch months up to and including current month (2026 sheet)
+const FETCHABLE_TABS=SHEET_TABS.filter(t=>NOW_YR>2026||(NOW_YR===2026&&t.mo<=NOW_MO));
+const CURRENT_MONTH=(()=>{return ["January","February","March","April","May","June","July","August","September","October","November","December"][NOW_MO];})();
 const C={bg:"#EDF2F7",panel:"#FFFFFF",panelAlt:"#F0F4F9",border:"#C9D6E3",royal:"#003087",blue:"#1a5fba",orange:"#E05A00",silver:"#718096",white:"#FFFFFF",teal:"#00BCD4",green:"#1a9e7a",text:"#1A202C",subtext:"#2D3748",muted:"#718096",purple:"#9B27AF"};
 const F="'Trebuchet MS','Century Gothic',sans-serif";
 
@@ -1021,7 +1025,7 @@ function Dashboard(){
 
     let count=0;
     const debugLog=[];
-    for(const {key,tab,hasBonham,examRow} of SHEET_TABS){
+    for(const {key,tab,hasBonham,examRow} of FETCHABLE_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
         const data=await fetchSheet(tab);
@@ -1618,22 +1622,26 @@ const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,Refere
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
 // Practice Performance data entered manually via Financial tab
 const SHEET_TABS=[
-  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7},
-  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7},
-  {key:"March",tab:"March '26",hasBonham:false,examRow:8},
-  {key:"April",tab:"April '26",hasBonham:false,examRow:8},
-  {key:"May",tab:"May '26",hasBonham:true,examRow:8},
-  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8},
-  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8},
-  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8},
-  {key:"September",tab:"Sep '26",hasBonham:true,examRow:8},
-  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8},
-  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8},
-  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8},
+  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
+  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7,mo:1},
+  {key:"March",tab:"March '26",hasBonham:false,examRow:8,mo:2},
+  {key:"April",tab:"April '26",hasBonham:false,examRow:8,mo:3},
+  {key:"May",tab:"May '26",hasBonham:true,examRow:8,mo:4},
+  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8,mo:5},
+  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8,mo:6},
+  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8,mo:7},
+  {key:"September",tab:"Sep '26",hasBonham:true,examRow:8,mo:8},
+  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8,mo:9},
+  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8,mo:10},
+  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8,mo:11},
 ];
 const MONTH_KEYS=SHEET_TABS.map(s=>s.key);
-// Auto-detect current month for default tab
-const CURRENT_MONTH=(()=>{const mo=new Date().getMonth();return ["January","February","March","April","May","June","July","August","September","October","November","December"][mo];})();
+// Current month index (0=Jan)
+const NOW_MO=new Date().getMonth();
+const NOW_YR=new Date().getFullYear();
+// Only fetch months up to and including current month (2026 sheet)
+const FETCHABLE_TABS=SHEET_TABS.filter(t=>NOW_YR>2026||(NOW_YR===2026&&t.mo<=NOW_MO));
+const CURRENT_MONTH=(()=>{return ["January","February","March","April","May","June","July","August","September","October","November","December"][NOW_MO];})();
 const C={bg:"#EDF2F7",panel:"#FFFFFF",panelAlt:"#F0F4F9",border:"#C9D6E3",royal:"#003087",blue:"#1a5fba",orange:"#E05A00",silver:"#718096",white:"#FFFFFF",teal:"#00BCD4",green:"#1a9e7a",text:"#1A202C",subtext:"#2D3748",muted:"#718096",purple:"#9B27AF"};
 const F="'Trebuchet MS','Century Gothic',sans-serif";
 
@@ -2156,7 +2164,7 @@ function Dashboard(){
 
     let count=0;
     const debugLog=[];
-    for(const {key,tab,hasBonham,examRow} of SHEET_TABS){
+    for(const {key,tab,hasBonham,examRow} of FETCHABLE_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
         const data=await fetchSheet(tab);
