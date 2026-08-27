@@ -979,10 +979,9 @@ function FinancialTab({month,allFin,setAllFin}){
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Adjusted Production"),
           h("p",{style:{color:C.blue,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(ap))
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+(colPct?accentFin(parseFloat(colPct),95,85):C.muted),borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collections"),
-          h("p",{style:{color:colPct?accentFin(parseFloat(colPct),95,85):C.muted,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(col)),
-          colPct&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},colPct+"% of Adjusted Production")
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.green,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Total"),
+          h("p",{style:{color:C.green,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{try{const s=localStorage.getItem("ao_coll_2026");if(s){const c=JSON.parse(s)[month];if(c?.collectionTotal)return "$"+parseFloat(c.collectionTotal).toLocaleString("en-US",{minimumFractionDigits:2});}}catch(e){}return fmt(col);})())
         )
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
@@ -990,10 +989,10 @@ function FinancialTab({month,allFin,setAllFin}){
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Total Starts"),
           h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},ts||"--")
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+(minPct?accentFin(parseFloat(minPct),80,60):C.muted),borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts at $2,980 Min"),
-          h("p",{style:{color:minPct?accentFin(parseFloat(minPct),80,60):C.muted,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},minPct?minPct+"%":"--"),
-          ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Above Minimum $2,980"),
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--"),
+          sam>0&&ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
@@ -2151,10 +2150,9 @@ function FinancialTab({month,allFin,setAllFin}){
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Adjusted Production"),
           h("p",{style:{color:C.blue,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(ap))
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+(colPct?accentFin(parseFloat(colPct),95,85):C.muted),borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collections"),
-          h("p",{style:{color:colPct?accentFin(parseFloat(colPct),95,85):C.muted,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(col)),
-          colPct&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},colPct+"% of Adjusted Production")
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.green,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Total"),
+          h("p",{style:{color:C.green,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{try{const s=localStorage.getItem("ao_coll_2026");if(s){const c=JSON.parse(s)[month];if(c?.collectionTotal)return "$"+parseFloat(c.collectionTotal).toLocaleString("en-US",{minimumFractionDigits:2});}}catch(e){}return fmt(col);})())
         )
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
@@ -2162,10 +2160,10 @@ function FinancialTab({month,allFin,setAllFin}){
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Total Starts"),
           h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},ts||"--")
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+(minPct?accentFin(parseFloat(minPct),80,60):C.muted),borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts at $2,980 Min"),
-          h("p",{style:{color:minPct?accentFin(parseFloat(minPct),80,60):C.muted,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},minPct?minPct+"%":"--"),
-          ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Above Minimum $2,980"),
+          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--"),
+          sam>0&&ts>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},sam+" of "+ts+" starts")
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
