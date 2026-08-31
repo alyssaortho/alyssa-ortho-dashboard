@@ -1015,7 +1015,8 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
           h("p",{style:{color:C.purple,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},rg||"--"),
-          rg>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},fmt(rgRev)+" revenue"+(ts>0?" · "+((rg/ts)*100).toFixed(0)+"% attach rate":""))
+          rg>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},fmt(rgRev)+" revenue"),
+          (()=>{const rgPctVal=allFin[month]?.rgPct!=null?parseFloat(allFin[month].rgPct):null;return rgPctVal!=null&&h("p",{style:{color:C.purple,fontSize:11,fontWeight:700,fontFamily:F,margin:"3px 0 0"}},rgPctVal.toFixed(1)+"% attach rate");})()
         )
       ),
       d.savedAt&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0",textAlign:"right"}},"Last updated: "+new Date(d.savedAt).toLocaleString())
@@ -2199,7 +2200,8 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
           h("p",{style:{color:C.purple,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},rg||"--"),
-          rg>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},fmt(rgRev)+" revenue"+(ts>0?" · "+((rg/ts)*100).toFixed(0)+"% attach rate":""))
+          rg>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},fmt(rgRev)+" revenue"),
+          (()=>{const rgPctVal=allFin[month]?.rgPct!=null?parseFloat(allFin[month].rgPct):null;return rgPctVal!=null&&h("p",{style:{color:C.purple,fontSize:11,fontWeight:700,fontFamily:F,margin:"3px 0 0"}},rgPctVal.toFixed(1)+"% attach rate");})()
         )
       ),
       d.savedAt&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0",textAlign:"right"}},"Last updated: "+new Date(d.savedAt).toLocaleString())
