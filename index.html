@@ -909,7 +909,7 @@ const FIN_PIN="9855";
 const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
-function FinancialTab({month,allFin,setAllFin}){
+function FinancialTab({month,allFin,setAllFin,sheetData}){
   const [pin,setPin]=useState("");
   const [unlocked,setUnlocked]=useState(false);
   const [pinErr,setPinErr]=useState(false);
@@ -998,13 +998,14 @@ function FinancialTab({month,allFin,setAllFin}){
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts"),
           h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{
+            const sd=sheetData||{};
             const fin=allFin[month]||{};
-            const sds=parseInt(fin.totalSameDay||0)||0;
-            const eom=parseInt(fin.eomConverted||0)||0;
+            const sds=sd.totalSameDay??0;
+            const eom=sd.eomConverted??0;
             const pend=parseInt(fin.pendingStarts||0)||0;
             const ded=parseInt(fin.deductions||0)||0;
             const total=sds+eom+pend-ded;
-            return total>0?total:(ts||"--");
+            return total>0?total:"--";
           })())
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
@@ -1312,7 +1313,7 @@ function Dashboard(){
         )
             ),
       section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
-      section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
+      section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin,sheetData:allData[month]}),
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026",section:"trends"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
@@ -2092,7 +2093,7 @@ const FIN_PIN="9855";
 const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
-function FinancialTab({month,allFin,setAllFin}){
+function FinancialTab({month,allFin,setAllFin,sheetData}){
   const [pin,setPin]=useState("");
   const [unlocked,setUnlocked]=useState(false);
   const [pinErr,setPinErr]=useState(false);
@@ -2181,13 +2182,14 @@ function FinancialTab({month,allFin,setAllFin}){
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts"),
           h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{
+            const sd=sheetData||{};
             const fin=allFin[month]||{};
-            const sds=parseInt(fin.totalSameDay||0)||0;
-            const eom=parseInt(fin.eomConverted||0)||0;
+            const sds=sd.totalSameDay??0;
+            const eom=sd.eomConverted??0;
             const pend=parseInt(fin.pendingStarts||0)||0;
             const ded=parseInt(fin.deductions||0)||0;
             const total=sds+eom+pend-ded;
-            return total>0?total:(ts||"--");
+            return total>0?total:"--";
           })())
         ),
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
@@ -2495,7 +2497,7 @@ function Dashboard(){
         )
             ),
       section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
-      section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin}),
+      section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin,sheetData:allData[month]}),
             section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026",section:"trends"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
