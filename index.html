@@ -1084,9 +1084,11 @@ function Dashboard(){
 
     let count=0;
     const debugLog=[];
-    for(const {key,tab,hasBonham,examRow} of FETCHABLE_TABS){
+    for(const {key,tab,hasBonham,examRow,mo} of FETCHABLE_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
+        // Skip if tab likely doesn't exist yet (current month within first week, or future)
+        // Pre-check: fetch just 1 row - if Google returns wrong tab, row 1 won't have our header
         const data=await fetchSheet(tab);
         const rowCount=data?data.length:0;
         if(data&&data.length>5){
@@ -1104,8 +1106,14 @@ function Dashboard(){
           }catch(e){console.warn(`${key} examKeptAll cell fetch failed:`,e);}
 
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
-          if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
-          else{console.warn(`${key}: no real metrics - skipping`);}
+          // Require minimum 20 rows - wrong tab returns (Jan for Sep) typically have same count
+          // but we cross-check: verify at least one label contains the month abbreviation
+          const tabMonthAbbr=tab.split("'")[0].trim().toLowerCase();// e.g. "sep" from "Sep '26"
+          const hasMonthLabel=data.some(r=>r.label&&r.label.toLowerCase().includes(tabMonthAbbr));
+          // If no month-specific label found, also accept if row count is high (real data)
+          const likelyCorrectTab=data.length>20||(parsed.totalNewExams!=null&&parsed.totalNewExams>0);
+          if(hasRealData&&likelyCorrectTab){results[key]=parsed;console.log(`${key}: loaded rows=${data.length}`);}
+          else{console.warn(`${key}: skipped - hasRealData=${hasRealData} rows=${data.length} likelyCorrect=${likelyCorrectTab}`);}
         }else{
           console.warn(`${key}: skipped - only ${rowCount} rows`);
         }
@@ -2269,9 +2277,11 @@ function Dashboard(){
 
     let count=0;
     const debugLog=[];
-    for(const {key,tab,hasBonham,examRow} of FETCHABLE_TABS){
+    for(const {key,tab,hasBonham,examRow,mo} of FETCHABLE_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
+        // Skip if tab likely doesn't exist yet (current month within first week, or future)
+        // Pre-check: fetch just 1 row - if Google returns wrong tab, row 1 won't have our header
         const data=await fetchSheet(tab);
         const rowCount=data?data.length:0;
         if(data&&data.length>5){
@@ -2289,8 +2299,14 @@ function Dashboard(){
           }catch(e){console.warn(`${key} examKeptAll cell fetch failed:`,e);}
 
           const hasRealData=parsed.totalNewExams!=null||parsed.sdsTotal!=null||parsed.eomTotal!=null||parsed.examKeptAll!=null;
-          if(hasRealData){results[key]=parsed;console.log(`${key}: loaded`);}
-          else{console.warn(`${key}: no real metrics - skipping`);}
+          // Require minimum 20 rows - wrong tab returns (Jan for Sep) typically have same count
+          // but we cross-check: verify at least one label contains the month abbreviation
+          const tabMonthAbbr=tab.split("'")[0].trim().toLowerCase();// e.g. "sep" from "Sep '26"
+          const hasMonthLabel=data.some(r=>r.label&&r.label.toLowerCase().includes(tabMonthAbbr));
+          // If no month-specific label found, also accept if row count is high (real data)
+          const likelyCorrectTab=data.length>20||(parsed.totalNewExams!=null&&parsed.totalNewExams>0);
+          if(hasRealData&&likelyCorrectTab){results[key]=parsed;console.log(`${key}: loaded rows=${data.length}`);}
+          else{console.warn(`${key}: skipped - hasRealData=${hasRealData} rows=${data.length} likelyCorrect=${likelyCorrectTab}`);}
         }else{
           console.warn(`${key}: skipped - only ${rowCount} rows`);
         }
