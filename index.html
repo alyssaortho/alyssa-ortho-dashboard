@@ -757,7 +757,7 @@ function PinGate({pin,label,storageKey,children}){
 function CollectionsTab({month,allFin,savePending}){
   const COLL_KEY="ao_coll_2026";
   const EMPTY_COLL=()=>({
-    collectionRate:"",
+    collectionRate:"",orthoFiFees:"",
     collectionSummary1:"",sunbitProduction:"",sunbitDeposit:"",collectionTotal:"",
     due0_10:"",due11_30:"",due31_60:"",due61_90:"",due90plus:""
   });
@@ -816,6 +816,7 @@ function CollectionsTab({month,allFin,savePending}){
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"28px 30px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
         h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 20px",fontFamily:F}},"Collection Summary"),
         h(Field,{fkey:"collectionRate",label:"Collection Rate %",hint:"e.g. 98.50",prefix:"%",noDollar:true}),
+        h(Field,{fkey:"orthoFiFees",label:"OrthoFi Fees"}),
         h(Field,{fkey:"collectionSummary1",label:"Collection Summary"}),
         h(Field,{fkey:"sunbitProduction",label:"Sunbit Production"}),
         h(Field,{fkey:"sunbitDeposit",label:"Sunbit Deposit (after fees)"}),
@@ -873,6 +874,11 @@ function CollectionsTab({month,allFin,savePending}){
           h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Collection Summary"),
           h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Before adjustments"),
           h("p",{style:{color:d.collectionSummary1?C.text:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.collectionSummary1))
+        ),
+        h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"14px 16px"}},
+          h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"OrthoFi Fees"),
+          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Deducted"),
+          h("p",{style:{color:d.orthoFiFees?C.orange:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.orthoFiFees))
         ),
         h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"14px 16px"}},
           h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Sunbit Production"),
