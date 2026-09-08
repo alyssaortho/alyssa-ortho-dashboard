@@ -859,7 +859,7 @@ function CollectionsTab({month,allFin,savePending}){
       h("p",{style:{color:C.muted,fontSize:16,fontFamily:F}},"No collections data for "+month+" yet"),
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F,cursor:"pointer"}},"＋ Enter Data")
     ):h("div",null,
-      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:16}},
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:16}},
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.royal,borderRadius:10,padding:"24px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",display:"flex",flexDirection:"column",justifyContent:"center"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Rate"),
           h("p",{style:{color:d.collectionRate?C.royal:C.muted,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},d.collectionRate?(parseFloat(d.collectionRate).toFixed(2)+"%"):"--")
@@ -867,18 +867,19 @@ function CollectionsTab({month,allFin,savePending}){
         h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.green,borderRadius:10,padding:"24px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",display:"flex",flexDirection:"column",justifyContent:"center"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Total"),
           h("p",{style:{color:d.collectionTotal?C.green:C.muted,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},fmt(d.collectionTotal)),
-          h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0"}},"Summary + Sunbit Deposit − Sunbit Production − OrthoFi Fees"),
-          d.collectionGoal&&h("div",{style:{marginTop:10,display:"flex",alignItems:"center",gap:10}},
-            h("span",{style:{color:C.muted,fontSize:10,fontFamily:F}},"Goal: "+fmt(d.collectionGoal)),
-            (()=>{
-              const tot=parseFloat((d.collectionTotal||"0").replace(/[$,]/g,""))||0;
-              const goal=parseFloat((d.collectionGoal||"0").replace(/[$,]/g,""))||0;
-              if(!tot||!goal)return null;
-              const diff=tot-goal;
-              const col=diff>=0?C.green:C.orange;
-              return h("span",{style:{color:col,fontWeight:700,fontSize:11,fontFamily:F}},(diff>=0?"+":"")+"$"+Math.abs(diff).toLocaleString("en-US",{minimumFractionDigits:2}));
-            })()
-          )
+          h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0"}},"Summary + Sunbit Deposit − Sunbit Production − OrthoFi Fees")
+        ),
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.royal,borderRadius:10,padding:"24px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",display:"flex",flexDirection:"column",justifyContent:"center"}},
+          h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Goal"),
+          h("p",{style:{color:d.collectionGoal?C.royal:C.muted,fontSize:52,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},fmt(d.collectionGoal)),
+          (()=>{
+            const tot=parseFloat((d.collectionTotal||"0").replace(/[$,]/g,""))||0;
+            const goal=parseFloat((d.collectionGoal||"0").replace(/[$,]/g,""))||0;
+            if(!tot||!goal)return h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0"}},"Enter data to see variance");
+            const diff=tot-goal;
+            const col=diff>=0?C.green:C.orange;
+            return h("p",{style:{color:col,fontSize:13,fontWeight:700,fontFamily:F,margin:"8px 0 0"}},(diff>=0?"+":"")+"$"+Math.abs(diff).toLocaleString("en-US",{minimumFractionDigits:2})+(diff>=0?" above goal":" below goal"));
+          })()
         )
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:24}},
