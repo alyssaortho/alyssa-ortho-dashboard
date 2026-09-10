@@ -413,6 +413,34 @@ function fetchSheet(tabName){
     })
     .catch(e=>{console.error("fetchSheet error:",e);return null;});
 }
+function fetchRescheduled(tabName){
+  // Scan col B (exam type) and G (tx status) to count Rescheduled by New vs OBS
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+B,G&sheet=${encodeURIComponent(tabName)}`;
+  return fetch(url,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.split("\n").filter(l=>l.trim());
+      let newR=0,obsR=0;
+      const OBS=["obs","observation","recall ready","phase 2","rr","p2"];
+      for(let i=1;i<lines.length;i++){
+        const parts=[];let c="",inQ=false;
+        for(let j=0;j<lines[i].length;j++){
+          const ch=lines[i][j];
+          if(ch==='"'){if(inQ&&lines[i][j+1]==='"'){c+='"';j++;}else inQ=!inQ;}
+          else if(ch===","&&!inQ){parts.push(c);c="";}
+          else c+=ch;
+        }
+        parts.push(c);
+        const examType=(parts[0]||"").toLowerCase().trim().replace(/^"|"$/g,"");
+        const status=(parts[1]||"").toLowerCase().trim().replace(/^"|"$/g,"");
+        if(!status.includes("rescheduled"))continue;
+        if(examType==="new"){newR++;}
+        else if(OBS.some(t=>examType.includes(t))){obsR++;}
+      }
+      return {newR,obsR};
+    })
+    .catch(e=>{console.warn("fetchRescheduled error:",e);return {newR:null,obsR:null};});
+}
 
 function extractMonthData(labelList,hasBonham){
   const labelMap={};
@@ -1286,8 +1314,8 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled Same Month"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newRescheduled!=null?d.newRescheduled:"--")
               )
             )
           ),
@@ -1307,8 +1335,8 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled Same Month"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsRescheduled!=null?d.obsRescheduled:"--")
               )
             )
           )
@@ -1797,6 +1825,34 @@ function fetchSheet(tabName){
       return result.length>2?result:null;
     })
     .catch(e=>{console.error("fetchSheet error:",e);return null;});
+}
+function fetchRescheduled(tabName){
+  // Scan col B (exam type) and G (tx status) to count Rescheduled by New vs OBS
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+B,G&sheet=${encodeURIComponent(tabName)}`;
+  return fetch(url,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.split("\n").filter(l=>l.trim());
+      let newR=0,obsR=0;
+      const OBS=["obs","observation","recall ready","phase 2","rr","p2"];
+      for(let i=1;i<lines.length;i++){
+        const parts=[];let c="",inQ=false;
+        for(let j=0;j<lines[i].length;j++){
+          const ch=lines[i][j];
+          if(ch==='"'){if(inQ&&lines[i][j+1]==='"'){c+='"';j++;}else inQ=!inQ;}
+          else if(ch===","&&!inQ){parts.push(c);c="";}
+          else c+=ch;
+        }
+        parts.push(c);
+        const examType=(parts[0]||"").toLowerCase().trim().replace(/^"|"$/g,"");
+        const status=(parts[1]||"").toLowerCase().trim().replace(/^"|"$/g,"");
+        if(!status.includes("rescheduled"))continue;
+        if(examType==="new"){newR++;}
+        else if(OBS.some(t=>examType.includes(t))){obsR++;}
+      }
+      return {newR,obsR};
+    })
+    .catch(e=>{console.warn("fetchRescheduled error:",e);return {newR:null,obsR:null};});
 }
 
 function extractMonthData(labelList,hasBonham){
@@ -2479,8 +2535,8 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled Same Month"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.newRescheduled!=null?d.newRescheduled:"--")
               )
             )
           ),
@@ -2500,8 +2556,8 @@ function Dashboard(){
                 h('p',{style:{color:C.orange,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsNotKept??"--")
               ),
               h('div',{style:{background:C.panelAlt,borderRadius:7,padding:"9px 12px",border:"1px solid "+C.border,borderLeft:"3px solid "+C.teal}},
-                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled (All)"),
-                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.totalRescheduledAll??"--")
+                h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},"Rescheduled Same Month"),
+                h('p',{style:{color:C.teal,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},d.obsRescheduled!=null?d.obsRescheduled:"--")
               )
             )
           )
