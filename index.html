@@ -1256,7 +1256,7 @@ function Dashboard(){
 
         h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",marginBottom:20,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"CONVERSION BREAKDOWN BY LOCATION"),
-          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12}},
+          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:12}},
             [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){var lbl=item[0],val=item[1];return h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:"1px solid "+C.border}},
               h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
               h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
@@ -1272,27 +1272,27 @@ function Dashboard(){
             h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"NEXT AVAILABLE SCHEDULING"),
             schedData?h('span',{style:{color:C.teal,fontSize:10,fontFamily:F}},"● LIVE"):h('span',{style:{color:C.muted,fontSize:10,fontFamily:F}},"Loading…")
           ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}},
-            h('div',null,
-              h('p',{style:{color:C.royal,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:4}},"Gainesville"),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F}},"DOC"),
-              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"8px 0 6px",fontFamily:F}},"REM"),
-              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20}},
+            h('div',{style:{background:C.panelAlt,borderRadius:10,padding:"16px 18px"}},
+              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Gainesville"),
+              h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
+              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:800,fontSize:14,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
+              h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
+              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:800,fontSize:14,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
             ),
-            h('div',null,
-              h('p',{style:{color:C.royal,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:4}},"Denison"),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F}},"DOC"),
-              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"8px 0 6px",fontFamily:F}},"REM"),
-              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
+            h('div',{style:{background:C.panelAlt,borderRadius:10,padding:"16px 18px"}},
+              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Denison"),
+              h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
+              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:800,fontSize:14,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
+              h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
+              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:800,fontSize:14,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
             ),
-            h('div',null,
-              h('p',{style:{color:C.royal,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:4}},"Bonham"),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F}},"DOC"),
-              h('div',{style:{padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.blue,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:10,fontFamily:F,marginLeft:8}},schedData["b_DOC2"])),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"8px 0 6px",fontFamily:F}},"REM"),
-              h('div',{style:{padding:"4px 8px",background:C.panelAlt,borderRadius:5}},h('span',{style:{color:C.teal,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--"))
+            h('div',{style:{background:C.panelAlt,borderRadius:10,padding:"16px 18px"}},
+              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Bonham"),
+              h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
+              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.blue,fontWeight:800,fontSize:14,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:13,fontFamily:F,marginLeft:12}},schedData["b_DOC2"])),
+              h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
+              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,border:"1px solid "+C.border}},h('span',{style:{color:C.teal,fontWeight:800,fontSize:14,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--"))
             )
           )
         )
@@ -2519,7 +2519,7 @@ function Dashboard(){
 
         h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",marginBottom:20,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"CONVERSION BREAKDOWN BY LOCATION"),
-          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12}},
+          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:12}},
             [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){var lbl=item[0],val=item[1];return h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:"1px solid "+C.border}},
               h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
               h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
