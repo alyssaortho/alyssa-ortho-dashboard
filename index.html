@@ -1267,17 +1267,33 @@ function Dashboard(){
           h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
           h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
-        h('div',{style:{marginTop:8}},
-          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"APPOINTMENT OUTCOMES"),
-          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}},
-            h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
-            h(Donut,{data:[
-  {name:"Converted",value:d.newConverted??0,color:C.green},
-  {name:"Pending",value:d.newPending??0,color:C.orange},
-  {name:"Into OBS",value:d.newIntoObs??0,color:C.silver},
-  {name:"Not Kept",value:d.newNotKept??0,color:C.orange}
-].filter(x=>x.value>0),title:"NEW EXAM OUTCOMES"}),
-            h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
+        h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",marginTop:8}},
+          h('div',{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}},
+            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"NEXT AVAILABLE SCHEDULING"),
+            schedData?h('span',{style:{color:C.teal,fontSize:10,fontFamily:F}},"● LIVE"):h('span',{style:{color:C.muted,fontSize:10,fontFamily:F}},"Loading…")
+          ),
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}},
+            h('div',null,
+              h('p',{style:{color:C.royal,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:4}},"Gainesville"),
+              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F}},"DOC"),
+              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
+              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"8px 0 6px",fontFamily:F}},"REM"),
+              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
+            ),
+            h('div',null,
+              h('p',{style:{color:C.royal,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:4}},"Denison"),
+              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F}},"DOC"),
+              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
+              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"8px 0 6px",fontFamily:F}},"REM"),
+              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
+            ),
+            h('div',null,
+              h('p',{style:{color:C.royal,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 10px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:4}},"Bonham"),
+              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F}},"DOC"),
+              h('div',{style:{padding:"4px 8px",background:C.panelAlt,borderRadius:5,marginBottom:3}},h('span',{style:{color:C.blue,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:10,fontFamily:F,marginLeft:8}},schedData["b_DOC2"])),
+              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"8px 0 6px",fontFamily:F}},"REM"),
+              h('div',{style:{padding:"4px 8px",background:C.panelAlt,borderRadius:5}},h('span',{style:{color:C.teal,fontWeight:700,fontSize:11,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--"))
+            )
           )
         )
       ),
