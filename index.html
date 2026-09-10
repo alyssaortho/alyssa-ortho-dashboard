@@ -1136,10 +1136,11 @@ function Dashboard(){
       try{
         // Skip if tab likely doesn't exist yet (current month within first week, or future)
         // Pre-check: fetch just 1 row - if Google returns wrong tab, row 1 won't have our header
-        const data=await fetchSheet(tab);
+        const [data,resched]=await Promise.all([fetchSheet(tab),fetchRescheduled(tab)]);
         const rowCount=data?data.length:0;
         if(data&&data.length>5){
           const parsed=extractMonthData(data,hasBonham);
+          if(resched){parsed.newRescheduled=resched.newR;parsed.obsRescheduled=resched.obsR;}
           // Fetch exam show rate directly from cell O7 (Jan/Feb) or O8 (Mar+)
           try{
             const examCell=await fetchCellValue(tab,examRow,15);
@@ -2357,10 +2358,11 @@ function Dashboard(){
       try{
         // Skip if tab likely doesn't exist yet (current month within first week, or future)
         // Pre-check: fetch just 1 row - if Google returns wrong tab, row 1 won't have our header
-        const data=await fetchSheet(tab);
+        const [data,resched]=await Promise.all([fetchSheet(tab),fetchRescheduled(tab)]);
         const rowCount=data?data.length:0;
         if(data&&data.length>5){
           const parsed=extractMonthData(data,hasBonham);
+          if(resched){parsed.newRescheduled=resched.newR;parsed.obsRescheduled=resched.obsR;}
           // Fetch exam show rate directly from cell O7 (Jan/Feb) or O8 (Mar+)
           try{
             const examCell=await fetchCellValue(tab,examRow,15);
