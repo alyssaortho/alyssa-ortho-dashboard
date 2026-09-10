@@ -918,7 +918,7 @@ function CollectionsTab({month,allFin,savePending}){
         ),
         h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"14px 16px"}},
           h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"OrthoFi Fees"),
-          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Deducted"),
+          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Deducted from summary"),
           h("p",{style:{color:d.orthoFiFees?C.orange:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.orthoFiFees))
         ),
         h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"14px 16px"}},
@@ -928,7 +928,7 @@ function CollectionsTab({month,allFin,savePending}){
         ),
         h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.green,borderRadius:8,padding:"14px 16px"}},
           h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Sunbit Deposit"),
-          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Added after fees"),
+          h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Added back to collection summary"),
           h("p",{style:{color:d.sunbitDeposit?C.green:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.sunbitDeposit))
         )
       ),
