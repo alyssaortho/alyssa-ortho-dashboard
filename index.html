@@ -324,6 +324,28 @@ const {useState,useEffect,useCallback,createElement:h,Fragment}=React;
 const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,ReferenceLine,PieChart,Pie,Cell}=Recharts;
 
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
+const SCHED_ID="1XH9Dgv4mWLIfOfGiQqFNYkrZ0OxiGnr1Pr6wW2_iWrU";
+function fetchScheduling(){
+  const url=`https://docs.google.com/spreadsheets/d/${SCHED_ID}/gviz/tq?tqx=out:csv&tq=select+A&sheet=2026`;
+  return fetch(url,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.split("\n").map(l=>l.trim().replace(/^"|"$/g,"")).filter(l=>l&&l!=="A");
+      const s={};
+      let loc="";
+      lines.forEach(line=>{
+        const ll=line.toLowerCase();
+        if(ll.includes("gainesville")){loc="g";return;}
+        if(ll.includes("denison")){loc="d";return;}
+        if(ll.includes("bonham")){loc="b";return;}
+        const m=line.match(/^([A-Za-z0-9]+)\s*-\s*(.+)$/);
+        if(m&&loc){s[loc+"_"+m[1].trim()]=m[2].trim();}
+      });
+      console.log("Sched:",s);
+      return s;
+    })
+    .catch(e=>{console.warn("fetchScheduling:",e);return null;});
+}
 // Practice Performance data entered manually via Financial tab
 const SHEET_TABS=[
   {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
@@ -1117,6 +1139,7 @@ function Dashboard(){
   const [lastRefresh,setLastRefresh]=useState(null);
   const [error,setError]=useState(null);
   const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
+  const [schedData,setSchedData]=useState(null);
   const savePending=(mo,pendingVal,overrideObj)=>{
     const base=allFin[mo]||{};
     const patch=overrideObj||{...(pendingVal!=null?{pendingStarts:pendingVal}:{}),savedAt:new Date().toISOString()};
@@ -1173,6 +1196,8 @@ function Dashboard(){
     console.log('=== FETCH SUMMARY ===',debugLog.join(' | '));
     console.log('=== MONTHS WITH DATA ===',Object.keys(results));
 
+    // Fetch live scheduling availability
+    try{const sd=await fetchScheduling();if(sd)setSchedData(sd);}catch(e){}
     setAllData(results);setLastRefresh(new Date());setLoading(false);
     const loaded=MONTH_KEYS.filter(m=>results[m]);
     if(loaded.length){const cur=loaded.includes(CURRENT_MONTH)?CURRENT_MONTH:loaded[loaded.length-1];setMonth(cur);}
@@ -1738,6 +1763,28 @@ const {useState,useEffect,useCallback,createElement:h,Fragment}=React;
 const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,ReferenceLine,PieChart,Pie,Cell}=Recharts;
 
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
+const SCHED_ID="1XH9Dgv4mWLIfOfGiQqFNYkrZ0OxiGnr1Pr6wW2_iWrU";
+function fetchScheduling(){
+  const url=`https://docs.google.com/spreadsheets/d/${SCHED_ID}/gviz/tq?tqx=out:csv&tq=select+A&sheet=2026`;
+  return fetch(url,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
+    .then(csv=>{
+      const lines=csv.split("\n").map(l=>l.trim().replace(/^"|"$/g,"")).filter(l=>l&&l!=="A");
+      const s={};
+      let loc="";
+      lines.forEach(line=>{
+        const ll=line.toLowerCase();
+        if(ll.includes("gainesville")){loc="g";return;}
+        if(ll.includes("denison")){loc="d";return;}
+        if(ll.includes("bonham")){loc="b";return;}
+        const m=line.match(/^([A-Za-z0-9]+)\s*-\s*(.+)$/);
+        if(m&&loc){s[loc+"_"+m[1].trim()]=m[2].trim();}
+      });
+      console.log("Sched:",s);
+      return s;
+    })
+    .catch(e=>{console.warn("fetchScheduling:",e);return null;});
+}
 // Practice Performance data entered manually via Financial tab
 const SHEET_TABS=[
   {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
@@ -2339,6 +2386,7 @@ function Dashboard(){
   const [lastRefresh,setLastRefresh]=useState(null);
   const [error,setError]=useState(null);
   const [allFin,setAllFin]=useState(()=>{try{const s=localStorage.getItem(FIN_STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
+  const [schedData,setSchedData]=useState(null);
   const savePending=(mo,pendingVal,overrideObj)=>{
     const base=allFin[mo]||{};
     const patch=overrideObj||{...(pendingVal!=null?{pendingStarts:pendingVal}:{}),savedAt:new Date().toISOString()};
@@ -2395,6 +2443,8 @@ function Dashboard(){
     console.log('=== FETCH SUMMARY ===',debugLog.join(' | '));
     console.log('=== MONTHS WITH DATA ===',Object.keys(results));
 
+    // Fetch live scheduling availability
+    try{const sd=await fetchScheduling();if(sd)setSchedData(sd);}catch(e){}
     setAllData(results);setLastRefresh(new Date());setLoading(false);
     const loaded=MONTH_KEYS.filter(m=>results[m]);
     if(loaded.length){const cur=loaded.includes(CURRENT_MONTH)?CURRENT_MONTH:loaded[loaded.length-1];setMonth(cur);}
