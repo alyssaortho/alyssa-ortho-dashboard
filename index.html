@@ -611,9 +611,9 @@ function KpiCard({label,value,goal,large,isCount}){
   const col=isTbd?C.muted:(isCount?C.blue:accent(value,goal));
   const pp=(!isTbd&&!isCount&&goal)?Math.min((value/goal)*100,100):null;
   const sl=(!isTbd&&!isCount&&goal)?stxt(value,goal):null;
-  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:large?"24px 22px 18px":"18px 20px 14px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-    h('p',{style:{color:C.subtext,fontSize:large?11:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},label),
-    h('p',{style:{color:col,fontSize:large?52:40,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":isCount?value:`${value}%`),
+  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:large?"16px 16px 12px":"12px 14px 10px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h('p',{style:{color:C.subtext,fontSize:large?10:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},label),
+    h('p',{style:{color:col,fontSize:large?38:28,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":isCount?value:`${value}%`),
     !isTbd&&!isCount&&goal&&h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},`Goal ${goal}%`,sl&&h('span',{style:{color:col,marginLeft:8,fontWeight:700}},sl)),
     isTbd&&h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"No data"),
     pp!=null&&h('div',{style:{height:3,background:C.border,borderRadius:4,marginTop:4,overflow:"hidden"}},h('div',{style:{height:"100%",width:`${pp}%`,background:col,borderRadius:4}}))
@@ -1136,7 +1136,7 @@ function SH({label,color,month,section}){
     setVal(draft);setEditing(false);
     try{localStorage.setItem(SK,draft);}catch(e){}
   };
-  return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24,flexWrap:"wrap"}},
+  return h('div',{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}},
     h('div',{style:{width:4,height:28,background:color,borderRadius:4,flexShrink:0}}),
     h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),
     h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`),
@@ -1274,7 +1274,7 @@ function Dashboard(){
       h('p',{style:{color:C.muted,fontSize:16,fontFamily:F}},`No data for ${month} yet`),
       h('button',{onClick:loadAll,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F}},"↻ Retry")
     ),
-    !loading&&d&&h('div',{style:{padding:"32px 36px",maxWidth:1500}},
+    !loading&&d&&h('div',{style:{padding:"16px 28px",maxWidth:1500}},
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month,section:"kpis"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
@@ -1289,11 +1289,11 @@ function Dashboard(){
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:12}},
             [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){var lbl=item[0],val=item[1];return h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:"1px solid "+C.border}},
               h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
-              h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
+              h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:20,fontWeight:900,margin:0,fontFamily:F}},val??0)
             );})
           )
         ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:10}},
           h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
           h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
@@ -1303,26 +1303,26 @@ function Dashboard(){
             schedData?h('span',{style:{color:C.teal,fontSize:10,fontFamily:F}},"● LIVE"):h('span',{style:{color:C.muted,fontSize:10,fontFamily:F}},"Loading…")
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20}},
-            h('div',{style:{background:C.panelAlt,borderRadius:10,padding:"16px 18px"}},
-              h('p',{style:{color:C.royal,fontSize:16,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Gainesville"),
+            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"10px 14px"}},
+              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Gainesville"),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
-              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:15,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:800,fontSize:20,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
+              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 10px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
-              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:15,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:800,fontSize:20,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
+              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 10px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["g_"+item[0]]?schedData["g_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
             ),
-            h('div',{style:{background:C.panelAlt,borderRadius:10,padding:"16px 18px"}},
-              h('p',{style:{color:C.royal,fontSize:16,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Denison"),
+            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"10px 14px"}},
+              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Denison"),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
-              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:15,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:800,fontSize:20,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
+              ...[["AW30","AW 30min"],["AW45","AW 45min"],["BON60","BON 60min"],["BON75","BON 75min"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 10px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.blue,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));}),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
-              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:15,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:800,fontSize:20,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
+              ...[["DBF","DBF"],["REM","REM"]].map(function(item){return h('div',{key:item[0],style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 10px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},h('span',{style:{color:C.subtext,fontSize:13,fontFamily:F}},item[1]),h('span',{style:{color:C.teal,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["d_"+item[0]]?schedData["d_"+item[0]].split(",").map(function(w){return w.trim()+"wk";}).join(" / "):"--"));})
             ),
-            h('div',{style:{background:C.panelAlt,borderRadius:10,padding:"16px 18px"}},
-              h('p',{style:{color:C.royal,fontSize:16,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Bonham"),
+            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"10px 14px"}},
+              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 14px",fontFamily:F,borderBottom:"3px solid "+C.royal,paddingBottom:6}},"Bonham"),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
-              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.blue,fontWeight:800,fontSize:20,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:16,fontFamily:F,marginLeft:12}},schedData["b_DOC2"])),
+              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.blue,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:16,fontFamily:F,marginLeft:12}},schedData["b_DOC2"])),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
-              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,border:"1px solid "+C.border}},h('span',{style:{color:C.teal,fontWeight:800,fontSize:20,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--"))
+              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,border:"1px solid "+C.border}},h('span',{style:{color:C.teal,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--"))
             )
           ),
           h(SpecialAnnouncements,null)
@@ -1367,8 +1367,8 @@ function Dashboard(){
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}},
-          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll,large:true}),
-          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85,large:true})
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
+          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
@@ -2097,9 +2097,9 @@ function KpiCard({label,value,goal,large,isCount}){
   const col=isTbd?C.muted:(isCount?C.blue:accent(value,goal));
   const pp=(!isTbd&&!isCount&&goal)?Math.min((value/goal)*100,100):null;
   const sl=(!isTbd&&!isCount&&goal)?stxt(value,goal):null;
-  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:large?"24px 22px 18px":"18px 20px 14px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-    h('p',{style:{color:C.subtext,fontSize:large?11:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},label),
-    h('p',{style:{color:col,fontSize:large?52:40,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":isCount?value:`${value}%`),
+  return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:large?"16px 16px 12px":"12px 14px 10px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+    h('p',{style:{color:C.subtext,fontSize:large?10:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},label),
+    h('p',{style:{color:col,fontSize:large?38:28,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":isCount?value:`${value}%`),
     !isTbd&&!isCount&&goal&&h('p',{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},`Goal ${goal}%`,sl&&h('span',{style:{color:col,marginLeft:8,fontWeight:700}},sl)),
     isTbd&&h('p',{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"No data"),
     pp!=null&&h('div',{style:{height:3,background:C.border,borderRadius:4,marginTop:4,overflow:"hidden"}},h('div',{style:{height:"100%",width:`${pp}%`,background:col,borderRadius:4}}))
@@ -2400,7 +2400,7 @@ function SH({label,color,month,section}){
     setVal(draft);setEditing(false);
     try{localStorage.setItem(SK,draft);}catch(e){}
   };
-  return h('div',{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24,flexWrap:"wrap"}},
+  return h('div',{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}},
     h('div',{style:{width:4,height:28,background:color,borderRadius:4,flexShrink:0}}),
     h('h2',{style:{margin:0,fontSize:15,color:C.text,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:900,fontFamily:F}},label),
     h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:4}},`— ${month} 2026`),
@@ -2538,7 +2538,7 @@ function Dashboard(){
       h('p',{style:{color:C.muted,fontSize:16,fontFamily:F}},`No data for ${month} yet`),
       h('button',{onClick:loadAll,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F}},"↻ Retry")
     ),
-    !loading&&d&&h('div',{style:{padding:"32px 36px",maxWidth:1500}},
+    !loading&&d&&h('div',{style:{padding:"16px 28px",maxWidth:1500}},
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month,section:"kpis"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
@@ -2553,11 +2553,11 @@ function Dashboard(){
           h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:12}},
             [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){var lbl=item[0],val=item[1];return h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:"1px solid "+C.border}},
               h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
-              h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:28,fontWeight:900,margin:0,fontFamily:F}},val??0)
+              h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:20,fontWeight:900,margin:0,fontFamily:F}},val??0)
             );})
           )
         ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:10}},
           h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
           h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
@@ -2614,8 +2614,8 @@ function Dashboard(){
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}},
-          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll,large:true}),
-          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85,large:true})
+          h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
+          h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
           h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 28px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
