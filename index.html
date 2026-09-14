@@ -1306,7 +1306,7 @@ function Dashboard(){
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
             ...[["Gainesville","g"],["Denison","d"]].map(function(loc){
               return h('div',{key:loc[0],style:{background:C.panelAlt,borderRadius:6,padding:"8px 10px"}},
-                h('p',{style:{color:C.royal,fontSize:12,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:2}}},loc[0]),
+                h('p',{style:{color:C.royal,fontSize:12,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:2}},loc[0]),
                 h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"AW 30min"),
