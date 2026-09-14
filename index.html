@@ -1277,132 +1277,79 @@ function Dashboard(){
     !loading&&d&&h('div',{style:{padding:"16px 28px",maxWidth:1500}},
       section==="overview"&&h('div',null,
         h(SH,{label:"KPIs",color:C.blue,month,section:"kpis"}),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}},
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}},
           h(StartsCard,{month,d,allFin,savePending}),
           h(RGCard,{month,allFin,savePending}),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
           h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true})
         ),
-
-        h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",marginBottom:20,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-          h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 16px",fontFamily:F}},"CONVERSION BREAKDOWN BY LOCATION"),
-          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:12}},
-            [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){var lbl=item[0],val=item[1];return h('div',{key:lbl,style:{background:C.panelAlt,borderRadius:8,padding:"12px 16px",border:"1px solid "+C.border}},
-              h('p',{style:{color:C.muted,fontSize:9,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},lbl),
-              h('p',{style:{color:val!=null&&val>0?C.blue:C.muted,fontSize:20,fontWeight:900,margin:0,fontFamily:F}},val??0)
-            );})
+        h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:8,padding:"10px 16px",marginBottom:8}},
+          h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"CONVERSION BREAKDOWN BY LOCATION"),
+          h('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8}},
+            [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){
+              return h('div',{key:item[0],style:{background:C.panelAlt,borderRadius:6,padding:"6px 10px",border:"1px solid "+C.border}},
+                h('p',{style:{color:C.muted,fontSize:8,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},item[0]),
+                h('p',{style:{color:item[1]!=null&&item[1]>0?C.blue:C.muted,fontSize:18,fontWeight:900,margin:0,fontFamily:F}},item[1]??0)
+              );
+            })
           )
         ),
-        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:10}},
+        h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
           h(KpiCard,{label:"Exam Show Rate — All",value:d.examKeptAll}),
           h(KpiCard,{label:"Exam Kept w/ Reschedules",value:d.examKeptResched,goal:85})
         ),
-        h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)",marginTop:8}},
+        h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:8,padding:"10px 16px",boxShadow:"0 1px 4px rgba(0,48,135,0.06)"}},
           h('div',{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
-            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"NEXT AVAILABLE SCHEDULING"),
-            schedData?h('span',{style:{color:C.teal,fontSize:10,fontFamily:F}},"● LIVE"):h('span',{style:{color:C.muted,fontSize:10,fontFamily:F}},"Loading…")
+            h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"NEXT AVAILABLE SCHEDULING"),
+            schedData?h('span',{style:{color:C.teal,fontSize:9,fontFamily:F}},"● LIVE"):h('span',{style:{color:C.muted,fontSize:9,fontFamily:F}},"Loading…")
           ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}},
-            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"8px 12px"}},
-              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:3}},"Gainesville"),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"AW"),
-                h('div',{style:{textAlign:"right"}},
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"30: "+(schedData&&schedData["g_AW30"]?schedData["g_AW30"]+"wk":"--")),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"45: "+(schedData&&schedData["g_AW45"]?schedData["g_AW45"]+"wk":"--"))
+          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
+            ...[["Gainesville","g"],["Denison","d"]].map(function(loc){
+              return h('div',{key:loc[0],style:{background:C.panelAlt,borderRadius:6,padding:"8px 10px"}},
+                h('p',{style:{color:C.royal,fontSize:12,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:2}}},loc[0]),
+                h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"AW 30min"),
+                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW30"]?schedData[loc[1]+"_AW30"]+"wk":"--")
+                ),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"AW 45min"),
+                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW45"]?schedData[loc[1]+"_AW45"]+"wk":"--")
+                ),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 60min"),
+                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON60"]?schedData[loc[1]+"_BON60"]+"wk":"--")
+                ),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:4,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 75min"),
+                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON75"]?schedData[loc[1]+"_BON75"]+"wk":"--")
+                ),
+                h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"REM"),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"SPKPD/DBF"),
+                  h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_DBF"]?schedData[loc[1]+"_DBF"]+"wk":"--")
+                ),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"REM"),
+                  h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_REM"]?schedData[loc[1]+"_REM"]+"wk":"--")
                 )
+              );
+            }),
+            h('div',{style:{background:C.panelAlt,borderRadius:6,padding:"8px 10px",display:"flex",flexDirection:"column"}},
+              h('p',{style:{color:C.royal,fontSize:12,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:2}},"Bonham"),
+              h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
+              h('div',{style:{padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:4,border:"1px solid "+C.border}},
+                h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),
+                schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:11,fontFamily:F,marginLeft:8}},schedData["b_DOC2"])
               ),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"BON"),
-                h('div',{style:{textAlign:"right"}},
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"60: "+(schedData&&schedData["g_BON60"]?schedData["g_BON60"]+"wk":"--")),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"75: "+(schedData&&schedData["g_BON75"]?schedData["g_BON75"]+"wk":"--"))
-                )
+              h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"REM"),
+              h('div',{style:{padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:6,border:"1px solid "+C.border}},
+                h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--")
               ),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"6px 0 4px",fontFamily:F}},"REM"),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"SPKPD/DBF"),
-                h('span',{style:{color:C.teal,fontWeight:800,fontSize:13,fontFamily:F}},schedData&&schedData["g_DBF"]?schedData["g_DBF"]+"wk":"--")
-              ),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"REM"),
-                h('span',{style:{color:C.teal,fontWeight:800,fontSize:13,fontFamily:F}},schedData&&schedData["g_REM"]?schedData["g_REM"]+"wk":"--")
-              )
-            ),
-            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"8px 12px"}},
-              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:3}},"Denison"),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"AW"),
-                h('div',{style:{textAlign:"right"}},
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"30: "+(schedData&&schedData["d_AW30"]?schedData["d_AW30"]+"wk":"--")),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"45: "+(schedData&&schedData["d_AW45"]?schedData["d_AW45"]+"wk":"--"))
-                )
-              ),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"BON"),
-                h('div',{style:{textAlign:"right"}},
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"60: "+(schedData&&schedData["d_BON60"]?schedData["d_BON60"]+"wk":"--")),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F,display:"block"}},"75: "+(schedData&&schedData["d_BON75"]?schedData["d_BON75"]+"wk":"--"))
-                )
-              ),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"6px 0 4px",fontFamily:F}},"REM"),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"SPKPD/DBF"),
-                h('span',{style:{color:C.teal,fontWeight:800,fontSize:13,fontFamily:F}},schedData&&schedData["d_DBF"]?schedData["d_DBF"]+"wk":"--")
-              ),
-              h('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:C.panel,borderRadius:5,border:"1px solid "+C.border}},
-                h('span',{style:{color:C.subtext,fontSize:12,fontFamily:F}},"REM"),
-                h('span',{style:{color:C.teal,fontWeight:800,fontSize:13,fontFamily:F}},schedData&&schedData["d_REM"]?schedData["d_REM"]+"wk":"--")
-              )
-            ),
-            h('div',{style:{background:C.panelAlt,borderRadius:8,padding:"8px 12px"}},
-              h('p',{style:{color:C.royal,fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 8px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:3}},"Bonham"),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
-              h('div',{style:{padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},h('span',{style:{color:C.blue,fontWeight:800,fontSize:13,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:12,fontFamily:F,marginLeft:8}},schedData["b_DOC2"])),
-              h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",margin:"6px 0 4px",fontFamily:F}},"REM"),
-              h('div',{style:{padding:"4px 8px",background:C.panel,borderRadius:5,marginBottom:6,border:"1px solid "+C.border}},h('span',{style:{color:C.teal,fontWeight:800,fontSize:13,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--")),
               h(SpecialAnnouncements,null)
             )
           )
         )
-      ),
-      section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
-        h('div',null,
-        h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
-        d.tcTable.length?h(Fragment,null,
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}},
-            h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
-            h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true}),
-            h(RGPctCard,{month,allFin,savePending})
-          ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}},
-            h(KpiCard,{label:"New Exam TRC%",value:d.eomNewAll,goal:70}),
-            h(KpiCard,{label:"OBS/RR/P2 TRC%",value:d.eomObsAll,goal:70})
-          ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:24}},
-            h(GoalBar,{title:"SDS% PER TC — GOAL: 50%",height:220,data:d.tcSds.map(r=>({label:r.label,value:r.value,goal:r.goal}))}),
-            h(GoalBar,{title:"TRC% PER TC — GOAL: 70%",height:220,data:d.tcTrc.map(r=>({label:r.label,value:r.value,goal:r.goal}))})
-          ),
-          h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,padding:"22px 26px",marginBottom:22,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
-            h('p',{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 14px",fontFamily:F}},"TC DETAIL COMPARISON"),
-            h('div',{style:{overflowX:"auto"}},
-              h('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:13,fontFamily:F}},
-                h('thead',null,h('tr',{style:{background:C.panelAlt}},["TC","Tx Rec","Tx Started","SDS%","EOM Conv","TRC%","vs Goal"].map(hd=>h('th',{key:hd,style:{padding:"10px 14px",textAlign:"left",color:C.subtext,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:`2px solid ${C.border}`,fontFamily:F}},hd)))),
-                h('tbody',null,d.tcTable.map((r,i)=>{const col=accent(r.trc,70),diff=(r.trc-70).toFixed(1);return h('tr',{key:i,style:{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.panel:C.panelAlt}},h('td',{style:{padding:"10px 14px",color:C.text,fontWeight:700}},r.name),h('td',{style:{padding:"10px 14px",color:C.subtext}},r.rec),h('td',{style:{padding:"10px 14px",color:C.blue,fontWeight:600}},r.started),h('td',{style:{padding:"10px 14px",color:C.subtext}},r.sds),h('td',{style:{padding:"10px 14px",color:C.subtext}},r.eom),h('td',{style:{padding:"10px 14px",color:col,fontWeight:700}},`${r.trc}%`),h('td',{style:{padding:"10px 14px"}},h('span',{style:{color:col,fontSize:11,fontWeight:700,background:`${col}22`,padding:"2px 8px",borderRadius:4}},r.trc>=70?`+${diff}%`:`${diff}%`)));})
-              )
-            )
-          ),
-          h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:22,marginBottom:22}},
-            h(GoalBar,{title:"EOM TRC — NEW EXAMS BY LOCATION",data:[{label:"Denison",value:d.eomNewDenison,goal:70},{label:"Gainesville",value:d.eomNewGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomNewBonham,goal:70}]:[])]}),
-            h(GoalBar,{title:"EOM TRC — OBS BY LOCATION",data:[{label:"Denison",value:d.eomObsDenison,goal:70},{label:"Gainesville",value:d.eomObsGainesville,goal:70},...(d.hasBonham?[{label:"Bonham",value:d.eomObsBonham,goal:70}]:[])]})
-          ),
-          h('div',{style:{display:"grid",gridTemplateColumns:`repeat(${d.remote.length},1fr)`,gap:22}},
-            d.remote.map((r,i)=>{const col=accent(r.conversion,r.goal);return h('div',{key:i,style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`3px solid ${col}`,borderRadius:8,padding:"12px 16px",boxShadow:"0 2px 6px rgba(0,48,135,0.06)"}},h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 4px",fontFamily:F}},`REMOTE — ${r.location.toUpperCase()}`),h('p',{style:{color:col,fontSize:28,fontWeight:900,margin:"0 0 3px",fontFamily:F}},`${r.conversion}%`),h('p',{style:{color:C.muted,fontSize:10,margin:"0 0 2px",fontFamily:F}},`Goal: ${r.goal}% `,h('span',{style:{color:col,fontWeight:700}},stxt(r.conversion,r.goal))),h('p',{style:{color:C.subtext,fontSize:10,margin:"0 0 6px",fontFamily:F}},`${r.started} started / ${r.recommended} recommended`),h('div',{style:{height:3,background:C.border,borderRadius:4}},h('div',{style:{height:"100%",borderRadius:4,background:col,width:`${Math.min((r.conversion/r.goal)*100,100)}%`}})));})
-          )
-        )):h('p',{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
-      )
       ),
       section==="exams"&&h('div',null,
         h(SH,{label:"Exam Outcomes",color:C.teal,month,section:"exams"}),
