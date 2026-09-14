@@ -983,7 +983,7 @@ function SpecialAnnouncements(){
     setText(draft);setEditing(false);
     try{localStorage.setItem(KEY,draft);}catch(e){}
   };
-  return h("div",{style:{marginTop:16,background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"16px 20px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+  return h("div",{style:{marginTop:8,background:C.panel,border:"1px solid "+C.border,borderRadius:8,padding:"10px 12px"}},
     h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
       h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"📌 Special Announcements"),
       editing
@@ -997,10 +997,10 @@ function SpecialAnnouncements(){
       ?h("textarea",{value:draft,onChange:function(e){setDraft(e.target.value);},
           placeholder:"Add reminders, upcoming events, announcements...",
           rows:3,
-          style:{width:"100%",border:"1px solid "+C.border,borderRadius:8,padding:"10px 14px",fontSize:14,fontFamily:F,outline:"none",background:C.panelAlt,color:C.text,resize:"vertical",boxSizing:"border-box"}})
+          style:{width:"100%",border:"1px solid "+C.border,borderRadius:6,padding:"6px 10px",fontSize:12,fontFamily:F,outline:"none",background:C.panelAlt,color:C.text,resize:"vertical",boxSizing:"border-box"}})
       :text
-        ?h("p",{style:{color:C.text,fontSize:14,fontFamily:F,margin:0,lineHeight:1.6,whiteSpace:"pre-wrap"}},text)
-        :h("p",{style:{color:C.muted,fontSize:13,fontFamily:F,margin:0,fontStyle:"italic"}},"No announcements — click '+ Add note' to add one")
+        ?h("p",{style:{color:C.text,fontSize:12,fontFamily:F,margin:0,lineHeight:1.5,whiteSpace:"pre-wrap"}},text)
+        :h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:0,fontStyle:"italic"}},"No announcements — click '+ Add note' to add one")
   );
 }
 const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
@@ -1322,10 +1322,10 @@ function Dashboard(){
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 8px",fontFamily:F}},"DOC"),
               h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,marginBottom:5,border:"1px solid "+C.border}},h('span',{style:{color:C.blue,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["b_DOC1"]?schedData["b_DOC1"]:"--"),schedData&&schedData["b_DOC2"]&&h('span',{style:{color:C.muted,fontSize:16,fontFamily:F,marginLeft:12}},schedData["b_DOC2"])),
               h('p',{style:{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"12px 0 8px",fontFamily:F}},"REM"),
-              h('div',{style:{padding:"7px 12px",background:C.panel,borderRadius:6,border:"1px solid "+C.border}},h('span',{style:{color:C.teal,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--"))
+              h('div',{style:{padding:"5px 10px",background:C.panel,borderRadius:5,marginBottom:3,border:"1px solid "+C.border}},h('span',{style:{color:C.teal,fontWeight:800,fontSize:16,fontFamily:F}},schedData&&schedData["b_REM"]?schedData["b_REM"]:"--")),
+              h(SpecialAnnouncements,null)
             )
-          ),
-          h(SpecialAnnouncements,null)
+          )
         )
       ),
       section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
