@@ -812,7 +812,7 @@ function StartsCard({month,d,allFin,savePending}){
         h("p",{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"SDS: "+sds),
         h("p",{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"EOM: "+eom),
         h(InlineEntry,{label:"Pending",value:pendingStarts,color:C.blue,onSave:function(v){savePending(month,v);}}),
-        h(InlineEntry,{label:"Deducted",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});})}),
+        h(InlineEntry,{label:"Deducted",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});}}),
         h("div",{style:{height:1,background:C.border,margin:"3px 0"}}),
         h("p",{style:{color:C.blue,fontSize:11,fontWeight:700,margin:0,fontFamily:F}},"Total: "+totalStarts),
         h("p",{style:{color:C.muted,fontSize:8,margin:0,fontFamily:F}},"SDS + EOM + Pending − Deductions")
@@ -2358,7 +2358,7 @@ function StartsCard({month,d,allFin,savePending}){
         h("p",{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"SDS: "+sds),
         h("p",{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"EOM: "+eom),
         h(InlineEntry,{label:"Pending",value:pendingStarts,color:C.blue,onSave:function(v){savePending(month,v);}}),
-        h(InlineEntry,{label:"Deducted",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});})}),
+        h(InlineEntry,{label:"Deducted",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});}}),
         h("div",{style:{height:1,background:C.border,margin:"3px 0"}}),
         h("p",{style:{color:C.blue,fontSize:11,fontWeight:700,margin:0,fontFamily:F}},"Total: "+totalStarts),
         h("p",{style:{color:C.muted,fontSize:8,margin:0,fontFamily:F}},"SDS + EOM + Pending − Deductions")
