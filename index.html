@@ -326,20 +326,71 @@ const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,Refere
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
 const SCHED_ID="1XH9Dgv4mWLIfOfGiQqFNYkrZ0OxiGnr1Pr6wW2_iWrU";
 function fetchScheduling(){
-  const url=`https://docs.google.com/spreadsheets/d/${SCHED_ID}/gviz/tq?tqx=out:csv&tq=select+A&sheet=2026`;
+  // Fetch columns A-D to capture Bonham data in cols C+D
+  const url=`https://docs.google.com/spreadsheets/d/${SCHED_ID}/gviz/tq?tqx=out:csv&tq=select+A,B,C,D&sheet=2026`;
   return fetch(url,{cache:"no-store"})
     .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
     .then(csv=>{
-      const lines=csv.split("\n").map(l=>l.trim().replace(/^"|"$/g,"")).filter(l=>l&&l!=="A");
       const s={};
+      // Parse CSV properly
+      const rows=csv.split("\n").map(function(line){
+        const cells=[];let c="",inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){if(inQ&&line[i+1]==='"'){c+='"';i++;}else inQ=!inQ;}
+          else if(ch===","&&!inQ){cells.push(c.trim());c="";}
+          else c+=ch;
+        }
+        cells.push(c.trim());
+        return cells;
+      });
+      // Parse col A for Gainesville and Denison
       let loc="";
-      lines.forEach(line=>{
-        const ll=line.toLowerCase();
+      rows.forEach(function(cells){
+        const a=(cells[0]||"").replace(/^"|"$/g,"").trim();
+        const ll=a.toLowerCase();
         if(ll.includes("gainesville")){loc="g";return;}
         if(ll.includes("denison")){loc="d";return;}
-        if(ll.includes("bonham")){loc="b";return;}
-        const m=line.match(/^([A-Za-z0-9]+)\s*-\s*(.+)$/);
-        if(m&&loc){s[loc+"_"+m[1].trim()]=m[2].trim();}
+        if(ll.includes("bonham")&&!cells[2]){loc="b";return;}
+        if(!a)return;
+        // Parse "KEY - val" pattern (allow space before dash)
+        const m=a.match(/^([A-Za-z0-9/()]+)\s*[\-–]\s*(.+)$/);
+        if(m&&(loc==="g"||loc==="d")){
+          const key=m[1].trim().replace(/[()]/g,"").replace(/\s+/g,"");
+          const val=m[2].trim();
+          s[loc+"_"+key]=val;
+          // Alias: DBF(REM) -> DBF
+          if(key.toUpperCase().includes("DBF"))s[loc+"_DBF"]=val;
+          if(key.toUpperCase().includes("REM")&&!key.toUpperCase().includes("DBF"))s[loc+"_REM"]=val;
+        }
+      });
+      // Parse cols C+D for Bonham: header row has "Bonham Doc" / "Bonham Remote"
+      // then value on the next row
+      let bonhamDocCol=-1,bonhamRemCol=-1;
+      for(let i=0;i<rows.length;i++){
+        const cells=rows[i];
+        const c=(cells[2]||"").replace(/^"|"$/g,"").trim().toLowerCase();
+        const d=(cells[3]||"").replace(/^"|"$/g,"").trim().toLowerCase();
+        if(c.includes("bonham")&&c.includes("doc"))bonhamDocCol=i;
+        if(d.includes("bonham")&&(d.includes("remote")||d.includes("rem")))bonhamRemCol=i;
+      }
+      // Value is on the next row after the header
+      if(bonhamDocCol>=0&&rows[bonhamDocCol+1]){
+        const v=(rows[bonhamDocCol+1][2]||"").replace(/^"|"$/g,"").trim();
+        if(v)s["b_DOC1"]=v;
+      }
+      if(bonhamRemCol>=0&&rows[bonhamRemCol+1]){
+        const v=(rows[bonhamRemCol+1][3]||"").replace(/^"|"$/g,"").trim();
+        if(v)s["b_REM"]=v;
+      }
+      // Fallback: if cols C+D have values in same row as headers
+      rows.forEach(function(cells){
+        const c=(cells[2]||"").replace(/^"|"$/g,"").trim();
+        const d=(cells[3]||"").replace(/^"|"$/g,"").trim();
+        if(c.toLowerCase().includes("bonham doc")&&cells[2+1]){
+          const v=(rows[rows.indexOf(cells)+1]||[])[2]||"";
+          if(v&&!s["b_DOC1"])s["b_DOC1"]=v.replace(/^"|"$/g,"").trim();
+        }
       });
       console.log("Sched:",s);
       return s;
