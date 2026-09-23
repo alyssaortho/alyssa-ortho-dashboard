@@ -1537,7 +1537,7 @@ function Dashboard(){
             )
           ):h("p",{style:{color:C.muted,fontFamily:F,padding:40,textAlign:"center"}},"TC data not found for this month.")
         )
-      ),
+      )),
       section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin,sheetData:allData[month]}),
             section==="trends"&&h('div',null,
