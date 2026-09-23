@@ -846,7 +846,9 @@ function StartsCard({month,d,allFin,savePending}){
         const pct=v/40;
         const fillH=Math.round(188*pct);
         const dotY=18+188-fillH;
+        const atGoal=(totalStarts||0)>=40;
         return h("g",null,
+          atGoal&&h("text",{x:45,y:12,textAnchor:"middle",fontSize:18,fill:"#f5a623"},"⭐"),
           h("circle",{cx:45,cy:dotY,r:8,fill:"#2a78d6",stroke:"white",strokeWidth:2}),
           h("text",{x:45,y:dotY+4,textAnchor:"middle",fontSize:7,fill:"white",fontWeight:600,fontFamily:F},v)
         );
