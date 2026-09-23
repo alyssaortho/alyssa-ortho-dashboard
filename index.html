@@ -1505,7 +1505,7 @@ function Dashboard(){
       section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
         h("div",null,
           h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
-          d.tcTable&&d.tcTable.length?h(Fragment,null,
+          (d.tcTable&&d.tcTable.length)?h(Fragment,null,
             h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}},
               h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
               h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true}),
