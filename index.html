@@ -326,13 +326,12 @@ const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,Refere
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
 const SCHED_ID="1XH9Dgv4mWLIfOfGiQqFNYkrZ0OxiGnr1Pr6wW2_iWrU";
 function fetchScheduling(){
-  // Fetch columns A-D to capture Bonham data in cols C+D
   const url=`https://docs.google.com/spreadsheets/d/${SCHED_ID}/gviz/tq?tqx=out:csv&tq=select+A,B,C,D&sheet=2026`;
   return fetch(url,{cache:"no-store"})
     .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
     .then(csv=>{
       const s={};
-      // Parse CSV properly
+      // Parse CSV rows with proper quote handling
       const rows=csv.split("\n").map(function(line){
         const cells=[];let c="",inQ=false;
         for(let i=0;i<line.length;i++){
@@ -342,92 +341,46 @@ function fetchScheduling(){
           else c+=ch;
         }
         cells.push(c.trim());
-        return cells;
+        return cells.map(function(x){return x.replace(/^"|"$/g,"").trim();});
       });
-      // Parse col A for Gainesville and Denison
+      // --- Parse Bonham from cols C+D ---
+      // Row with "Bonham Doc" / "Bonham Remote" as headers, values on next row
+      for(let i=0;i<rows.length;i++){
+        const c=(rows[i][2]||"").toLowerCase();
+        const d=(rows[i][3]||"").toLowerCase();
+        if(c.includes("bonham")&&c.includes("doc")){
+          const nextC=(rows[i+1]&&rows[i+1][2])||"";
+          if(nextC)s["b_DOC1"]=nextC;
+        }
+        if(d.includes("bonham")&&(d.includes("remote")||d.includes("rem"))){
+          const nextD=(rows[i+1]&&rows[i+1][3])||"";
+          if(nextD)s["b_REM"]=nextD;
+        }
+      }
+      // --- Parse col A for Gainesville and Denison ---
       let loc="";
       rows.forEach(function(cells){
-        const a=(cells[0]||"").replace(/^"|"$/g,"").trim();
+        const a=(cells[0]||"").trim();
         const ll=a.toLowerCase();
-        if(ll.includes("gainesville")){loc="g";return;}
-        if(ll.includes("denison")){loc="d";return;}
-        if(ll.includes("bonham")&&!cells[2]){loc="b";return;}
-        if(!a)return;
-        // Parse "KEY - val" pattern (allow space before dash)
-        const m=a.match(/^([A-Za-z0-9/()]+)\s*[\-–]\s*(.+)$/);
-        if(m&&(loc==="g"||loc==="d")){
-          const key=m[1].trim().replace(/[()]/g,"").replace(/\s+/g,"");
+        if(ll.includes("gainesville")&&ll.includes("next")){loc="g";return;}
+        if(ll.includes("denison")&&ll.includes("next")){loc="d";return;}
+        if(!a||!loc)return;
+        // Match "KEY - val" or "KEY- val" patterns
+        const m=a.match(/^([A-Za-z0-9/()\s]+?)\s*[-–]\s*(.+)$/);
+        if(m){
+          const rawKey=m[1].trim();
           const val=m[2].trim();
+          // Normalize key: remove spaces/parens, uppercase
+          const key=rawKey.replace(/[()]/g,"").replace(/\s+/g,"").toUpperCase();
           s[loc+"_"+key]=val;
-          // Alias: DBF(REM) -> DBF
-          if(key.toUpperCase().includes("DBF"))s[loc+"_DBF"]=val;
-          if(key.toUpperCase().includes("REM")&&!key.toUpperCase().includes("DBF"))s[loc+"_REM"]=val;
+          console.log("Parsed:",loc+"_"+key,"=",val);
         }
       });
-      // Parse cols C+D for Bonham: header row has "Bonham Doc" / "Bonham Remote"
-      // then value on the next row
-      let bonhamDocCol=-1,bonhamRemCol=-1;
-      for(let i=0;i<rows.length;i++){
-        const cells=rows[i];
-        const c=(cells[2]||"").replace(/^"|"$/g,"").trim().toLowerCase();
-        const d=(cells[3]||"").replace(/^"|"$/g,"").trim().toLowerCase();
-        if(c.includes("bonham")&&c.includes("doc"))bonhamDocCol=i;
-        if(d.includes("bonham")&&(d.includes("remote")||d.includes("rem")))bonhamRemCol=i;
-      }
-      // Value is on the next row after the header
-      if(bonhamDocCol>=0&&rows[bonhamDocCol+1]){
-        const v=(rows[bonhamDocCol+1][2]||"").replace(/^"|"$/g,"").trim();
-        if(v)s["b_DOC1"]=v;
-      }
-      if(bonhamRemCol>=0&&rows[bonhamRemCol+1]){
-        const v=(rows[bonhamRemCol+1][3]||"").replace(/^"|"$/g,"").trim();
-        if(v)s["b_REM"]=v;
-      }
-      // Fallback: if cols C+D have values in same row as headers
-      rows.forEach(function(cells){
-        const c=(cells[2]||"").replace(/^"|"$/g,"").trim();
-        const d=(cells[3]||"").replace(/^"|"$/g,"").trim();
-        if(c.toLowerCase().includes("bonham doc")&&cells[2+1]){
-          const v=(rows[rows.indexOf(cells)+1]||[])[2]||"";
-          if(v&&!s["b_DOC1"])s["b_DOC1"]=v.replace(/^"|"$/g,"").trim();
-        }
-      });
-      console.log("Sched:",s);
+      console.log("Sched final:",s);
       return s;
     })
     .catch(e=>{console.warn("fetchScheduling:",e);return null;});
 }
-// Practice Performance data entered manually via Financial tab
-const SHEET_TABS=[
-  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
-  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7,mo:1},
-  {key:"March",tab:"March '26",hasBonham:false,examRow:8,mo:2},
-  {key:"April",tab:"April '26",hasBonham:false,examRow:8,mo:3},
-  {key:"May",tab:"May '26",hasBonham:true,examRow:8,mo:4},
-  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8,mo:5},
-  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8,mo:6},
-  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8,mo:7},
-  {key:"September",tab:"Sept '26",hasBonham:true,examRow:8,mo:8},
-  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8,mo:9},
-  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8,mo:10},
-  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8,mo:11},
-];
-const MONTH_KEYS=SHEET_TABS.map(s=>s.key);
-// Current month index (0=Jan)
-const NOW_MO=new Date().getMonth();
-const NOW_YR=new Date().getFullYear();
-// Only fetch months up to and including current month (2026 sheet)
-const FETCHABLE_TABS=SHEET_TABS.filter(t=>NOW_YR>2026||(NOW_YR===2026&&t.mo<=NOW_MO));
-const CURRENT_MONTH=(()=>{return ["January","February","March","April","May","June","July","August","September","October","November","December"][NOW_MO];})();
-const C={bg:"#EDF2F7",panel:"#FFFFFF",panelAlt:"#F0F4F9",border:"#C9D6E3",royal:"#003087",blue:"#1a5fba",orange:"#E05A00",silver:"#718096",white:"#FFFFFF",teal:"#00BCD4",green:"#1a9e7a",text:"#1A202C",subtext:"#2D3748",muted:"#718096",purple:"#9B27AF"};
-const F="'Trebuchet MS','Century Gothic',sans-serif";
-
-const pct=v=>{if(!v)return null;const s=String(v).trim();if(s==="-"||s==="—"||s==="")return null;const n=parseFloat(s.replace("%",""));return isNaN(n)?null:n;};
-const num=v=>{if(!v)return null;const s=String(v).trim();if(s==="-"||s==="")return null;const n=parseInt(s.replace(/[^0-9.-]/g,""));return isNaN(n)?null:n;};
-const norm=s=>String(s||"").trim().toLowerCase().replace(/\s+/g," ");
-const accent=(v,g)=>v===100?C.purple:(!g||v>=g?C.blue:C.orange);
-const stxt=(v,g)=>{if(!g||v==null)return null;const d=(v-g).toFixed(1);return v>=g?`+${d}% above goal`:`${d}% below goal`;};
-
 function parseCSV(text){
   const rows=[],row=[];let cur="",inQ=false;
   for(let i=0;i<text.length;i++){
@@ -1447,6 +1400,10 @@ function Dashboard(){
                   h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW45"]?schedData[loc[1]+"_AW45"]+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
+                  h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 45min"),
+                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON45"]?schedData[loc[1]+"_BON45"]+"wk":"--")
+                ),
+                h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 60min"),
                   h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON60"]?schedData[loc[1]+"_BON60"]+"wk":"--")
                 ),
@@ -1457,7 +1414,7 @@ function Dashboard(){
                 h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"REM"),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"SPKPD/DBF"),
-                  h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_DBF"]?schedData[loc[1]+"_DBF"]+"wk":"--")
+                  h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&(schedData[loc[1]+"_DBFREM"]||schedData[loc[1]+"_DBF"])?( schedData[loc[1]+"_DBFREM"]||schedData[loc[1]+"_DBF"])+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"REM"),
