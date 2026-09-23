@@ -766,7 +766,9 @@ function RGCard({month,allFin,savePending}){
         const pct=v/20;
         const fillH=Math.round(188*pct);
         const dotY=18+188-fillH;
+        const atGoal=(rgVal||0)>=20;
         return h("g",null,
+          atGoal&&h("text",{x:45,y:12,textAnchor:"middle",fontSize:18,fill:"#f5a623"},"⭐"),
           h("circle",{cx:45,cy:dotY,r:8,fill:"#6250d6",stroke:"white",strokeWidth:2}),
           h("text",{x:45,y:dotY+4,textAnchor:"middle",fontSize:7,fill:"white",fontWeight:600,fontFamily:F},v)
         );
@@ -1050,12 +1052,15 @@ function CollectionsTab({month,allFin,savePending}){
 }
 function SpecialAnnouncements(){
   const KEY="ao_announcements";
-  const [text,setText]=useState(()=>{try{return localStorage.getItem(KEY)||"";}catch(e){return "";}});
+  const read=()=>{try{return localStorage.getItem(KEY)||"";}catch(e){return "";}};
+  const [text,setText]=useState(read);
   const [editing,setEditing]=useState(false);
-  const [draft,setDraft]=useState(()=>{try{return localStorage.getItem(KEY)||"";}catch(e){return "";}});
+  const [draft,setDraft]=useState(read);
+  // Re-read from storage whenever component mounts or becomes visible
+  useEffect(()=>{const v=read();setText(v);setDraft(v);},[]);
   const save=()=>{
-    setText(draft);setEditing(false);
-    try{localStorage.setItem(KEY,draft);}catch(e){}
+    setText(draft);setDraft(draft);setEditing(false);
+    try{localStorage.setItem(KEY,draft);}catch(e){alert("Save failed: "+e);}
   };
   return h("div",{style:{marginTop:8,background:C.panel,border:"1px solid "+C.border,borderRadius:8,padding:"10px 12px"}},
     h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
