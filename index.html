@@ -1088,6 +1088,10 @@ function SpecialAnnouncements(){
 }
 const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
+const NOW_MO=new Date().getMonth();
+const NOW_YR=new Date().getFullYear();
+const CURRENT_MONTH=["January","February","March","April","May","June","July","August","September","October","November","December"][NOW_MO];
+const FETCHABLE_TABS=SHEET_TABS.filter(function(t){return NOW_YR>2026||(NOW_YR===2026&&t.mo<=NOW_MO);});
 const TC_PIN="1219";
 const FIN_STORAGE_KEY="ao_fin_2026";
 const EMPTY_FIN=()=>({startProduction:"",adjustedProduction:"",collections:"",totalStarts:"",startsAtMin:"",rgCount:""});
