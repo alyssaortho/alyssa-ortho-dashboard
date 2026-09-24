@@ -1088,6 +1088,21 @@ function SpecialAnnouncements(){
 }
 const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
+const SHEET_TABS=[
+  {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
+  {key:"February",tab:"Feb '26",hasBonham:false,examRow:7,mo:1},
+  {key:"March",tab:"March '26",hasBonham:false,examRow:8,mo:2},
+  {key:"April",tab:"April '26",hasBonham:false,examRow:8,mo:3},
+  {key:"May",tab:"May '26",hasBonham:true,examRow:8,mo:4},
+  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8,mo:5},
+  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8,mo:6},
+  {key:"August",tab:"Aug '26",hasBonham:true,examRow:8,mo:7},
+  {key:"September",tab:"Sept '26",hasBonham:true,examRow:8,mo:8},
+  {key:"October",tab:"Oct '26",hasBonham:true,examRow:8,mo:9},
+  {key:"November",tab:"Nov '26",hasBonham:true,examRow:8,mo:10},
+  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8,mo:11},
+];
+const MONTH_KEYS=SHEET_TABS.map(function(s){return s.key;});
 const NOW_MO=new Date().getMonth();
 const NOW_YR=new Date().getFullYear();
 const CURRENT_MONTH=["January","February","March","April","May","June","July","August","September","October","November","December"][NOW_MO];
