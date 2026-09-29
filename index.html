@@ -476,6 +476,7 @@ function fetchRescheduled(tabName){
     .catch(e=>{console.warn("fetchRescheduled error:",e);return {newR:null,obsR:null};});
 }
 
+function norm(s){return (s||"").toLowerCase().replace(/\s+/g," ").trim();}
 function extractMonthData(labelList,hasBonham){
   const labelMap={};
   // Normalize labels: collapse all whitespace/newlines to single space
