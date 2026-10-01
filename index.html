@@ -1102,7 +1102,7 @@ function SpecialAnnouncements(){
         :h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:0,fontStyle:"italic"}},"No announcements — click '+ Add note' to add one")
   );
 }
-const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"trends",label:"Trends"}];
+const SECTIONS=[{id:"overview",label:"KPIs"},{id:"exams",label:"Exam Outcomes"},{id:"tc",label:"TC Performance",locked:true,pin:"1219"},{id:"collections",label:"Collections",locked:true,pin:"9715"},{id:"financial",label:"Financial",locked:true},{id:"ytd",label:"YTD Performance"},{id:"trends",label:"Trends"}];
 const FIN_PIN="9855";
 const SHEET_TABS=[
   {key:"January",tab:"Jan '26",hasBonham:false,examRow:7,mo:0},
@@ -1588,7 +1588,63 @@ function Dashboard(){
       )),
       section==="collections"&&h(PinGate,{pin:"9715",label:"Collections",storageKey:"coll_unlocked"},h(CollectionsTab,{month:month,allFin:allFin,savePending:savePending})),
       section==="financial"&&h(FinancialTab,{month:month,allFin:allFin,setAllFin:setAllFin,sheetData:allData[month]}),
-            section==="trends"&&h('div',null,
+            section==="ytd"&&h('div',null,
+        h(SH,{label:"YTD Performance",color:C.royal,month:"2026",section:"ytd"}),
+        h('div',{style:{overflowX:"auto",marginTop:8}},
+          h('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:12,fontFamily:F,minWidth:900}},
+            h('thead',null,
+              h('tr',null,
+                h('th',{style:{position:"sticky",left:0,background:C.navy,color:C.white,padding:"10px 14px",textAlign:"left",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",zIndex:2,minWidth:180,borderBottom:"2px solid "+C.border}},"METRIC"),
+                MONTH_KEYS.filter(function(m){return allData[m];}).map(function(m){
+                  return h('th',{key:m,style:{background:C.navy,color:C.white,padding:"10px 12px",textAlign:"center",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",borderBottom:"2px solid "+C.border,minWidth:90}},m.slice(0,3).toUpperCase());
+                })
+              )
+            ),
+            h('tbody',null,[
+              {label:"STARTS",key:"totalStarts",fmt:function(v){return v!=null?v:"--"},section:true},
+              {label:"SDS Count",key:"sdsCount",fmt:function(v){return v!=null?v:"--"}},
+              {label:"SDS%",key:"sdsTotal",fmt:function(v){return v!=null?v+"%":"--"},goal:50},
+              {label:"EOM Converted",key:"eomCount",fmt:function(v){return v!=null?v:"--"}},
+              {label:"EOM TRC%",key:"eomTotal",fmt:function(v){return v!=null?v+"%":"--"},goal:70},
+              {label:"New Exam TRC%",key:"eomNewAll",fmt:function(v){return v!=null?v+"%":"--"},goal:70},
+              {label:"OBS/RR/P2 TRC%",key:"eomObsAll",fmt:function(v){return v!=null?v+"%":"--"},goal:70},
+              {label:"Exam Show Rate",key:"examShowRate",fmt:function(v){return v!=null?v+"%":"--"},goal:85,section:true},
+              {label:"Exam Kept w/ Resched",key:"examKeptRate",fmt:function(v){return v!=null?v+"%":"--"},goal:85},
+              {label:"New Exams Total",key:"newTotal",fmt:function(v){return v!=null?v:"--"},section:true},
+              {label:"New Kept",key:"newKept",fmt:function(v){return v!=null?v:"--"}},
+              {label:"New Not Kept",key:"newNotKept",fmt:function(v){return v!=null?v:"--"}},
+              {label:"OBS Total",key:"obsTotal",fmt:function(v){return v!=null?v:"--"}},
+              {label:"OBS Kept",key:"obsKept",fmt:function(v){return v!=null?v:"--"}},
+              {label:"OBS Not Kept",key:"obsNotKept",fmt:function(v){return v!=null?v:"--"}},
+              {label:"RG Count",key:"rgCount",fmt:function(v){
+                var fin=allFin&&allFin[arguments[1]];
+                return fin&&fin.rgCount!=null?fin.rgCount:"--";
+              },useMonth:true,section:true},
+              {label:"Collection Total",key:"collTotal",fmt:function(v,m){
+                try{var c=JSON.parse(localStorage.getItem("ao_coll_2026")||"{}");var mo=c[m];if(!mo)return "--";var s=parseFloat(mo.summary||0),sb=parseFloat(mo.sunbitDeposit||0),sp=parseFloat(mo.sunbitProd||0),of=parseFloat(mo.orthofiFees||0);var t=s+sb-sp-of;return t?"$"+t.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"--";}catch(e){return "--";}
+              },useMonth:true},
+              {label:"Collection Rate%",key:"collRate",fmt:function(v,m){
+                try{var c=JSON.parse(localStorage.getItem("ao_coll_2026")||"{}");var mo=c[m];return mo&&mo.rate?mo.rate+"%":"--";}catch(e){return "--";}
+              },useMonth:true},
+            ].map(function(row,ri){
+              var months=MONTH_KEYS.filter(function(m){return allData[m];});
+              return h('tr',{key:row.label,style:{background:row.section?(ri%2===0?C.panelAlt:"#e8edf5"):ri%2===0?C.panel:C.panelAlt,borderBottom:"1px solid "+C.border}},
+                h('td',{style:{position:"sticky",left:0,background:row.section?(ri%2===0?C.panelAlt:"#e8edf5"):ri%2===0?C.panel:C.panelAlt,padding:"8px 14px",fontWeight:row.section?700:500,color:row.section?C.royal:C.text,fontSize:row.section?11:12,fontFamily:F,borderRight:"2px solid "+C.border,zIndex:1}},row.label),
+                months.map(function(m){
+                  var d=allData[m]||{};
+                  var raw=row.useMonth?null:d[row.key];
+                  var val=row.fmt(raw,m);
+                  var numVal=parseFloat(String(val).replace(/[^0-9.-]/g,""));
+                  var col=C.text;
+                  if(row.goal&&!isNaN(numVal)){col=numVal>=row.goal?C.royal:numVal>=(row.goal*0.9)?C.orange:C.navy;}
+                  return h('td',{key:m,style:{padding:"8px 12px",textAlign:"center",color:col,fontWeight:row.goal&&!isNaN(numVal)?700:400,fontFamily:F,fontSize:12}},val);
+                })
+              );
+            }))
+          )
+        )
+      ),
+      section==="trends"&&h('div',null,
         h(SH,{label:"Year-to-Date Trends",color:C.teal,month:"2026",section:"trends"}),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:22}},
           h(TrendBar,{allData,metricKey:"totalNewExams",goal:null,label:"TOTAL NEW EXAMS",isCount:true}),
