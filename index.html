@@ -737,7 +737,7 @@ function RGCard({month,allFin,savePending}){
     savePending(month,null,updated[month]);
     setEditing(false);
   };
-  return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"16px 16px 14px",display:"flex",flexDirection:"row",alignItems:"stretch",gap:8,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+  return h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.orange,borderRadius:10,padding:"16px 16px 14px",display:"flex",flexDirection:"row",alignItems:"stretch",gap:8,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
     h("div",{style:{display:"flex",flexDirection:"column",gap:4,flex:1}},
       h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:0,fontFamily:F}},"RG Provided"),
       h("p",{style:{color:C.purple,fontSize:38,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},rgVal!=null?rgVal:"--"),
@@ -789,7 +789,7 @@ function RGCard({month,allFin,savePending}){
         const atGoal=(rgVal||0)>=20;
         return h("g",null,
           atGoal&&h("text",{x:45,y:12,textAnchor:"middle",fontSize:18,fill:"#f5a623"},"⭐"),
-          h("circle",{cx:45,cy:dotY,r:8,fill:"#6250d6",stroke:"white",strokeWidth:2}),
+          h("circle",{cx:45,cy:dotY,r:8,fill:C.orange,stroke:"white",strokeWidth:2}),
           h("text",{x:45,y:dotY+4,textAnchor:"middle",fontSize:7,fill:"white",fontWeight:600,fontFamily:F},v)
         );
       })()
@@ -1422,13 +1422,13 @@ function Dashboard(){
             schedData?h('span',{style:{color:C.teal,fontSize:9,fontFamily:F}},"● LIVE"):h('span',{style:{color:C.muted,fontSize:9,fontFamily:F}},"Loading…")
           ),
           h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
-            ...[["Gainesville","g"],["Denison","d"]].map(function(loc){
+            ...[["Gainesville","g",C.orange],["Denison","d",C.royal]].map(function(loc){
               return h('div',{key:loc[0],style:{background:C.panelAlt,borderRadius:6,padding:"8px 10px"}},
-                h('p',{style:{color:C.royal,fontSize:12,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F,borderBottom:"2px solid "+C.royal,paddingBottom:2}},loc[0]),
+                h('p',{style:{color:loc[2],fontSize:12,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px",fontFamily:F,borderBottom:"2px solid "+loc[2],paddingBottom:2}},loc[0]),
                 h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"DOC"),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"AW 30min"),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW30"]?schedData[loc[1]+"_AW30"]+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW30"]?schedData[loc[1]+"_AW30"]+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"AW 45min"),
