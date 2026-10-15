@@ -327,7 +327,7 @@ const {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,Refere
 const SHEET_ID="1wXf0BklqmjDn5Lswrg-B6-cHVeFCv-qUkFdFvj40-W8";
 const SCHED_ID="1XH9Dgv4mWLIfOfGiQqFNYkrZ0OxiGnr1Pr6wW2_iWrU";
 const C={
-  blue:"#0047CC",royal:"#003087",navy:"#001f5b",teal:"#0047CC",
+  blue:"#003087",royal:"#003087",navy:"#001f5b",teal:"#003087",
   green:"#003087",orange:"#FF6B00",purple:"#6250d6",
   text:"#0f172a",subtext:"#334155",muted:"#94a3b8",
   panel:"#ffffff",panelAlt:"#f1f5f9",border:"#e2e8f0",
@@ -1407,7 +1407,7 @@ function Dashboard(){
             [["SDS",d.totalSameDay],["Denison SDS",d.denStarts],["Gainesville SDS",d.gainStarts],...(d.hasBonham?[["Bonham SDS",d.bonStarts]]:[]),["EOM Converted",d.eomConverted]].map(function(item){
               return h('div',{key:item[0],style:{background:C.panelAlt,borderRadius:6,padding:"6px 10px",border:"1px solid "+C.border}},
                 h('p',{style:{color:C.muted,fontSize:8,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:F}},item[0]),
-                h('p',{style:{color:item[1]!=null&&item[1]>0?C.blue:C.muted,fontSize:18,fontWeight:900,margin:0,fontFamily:F}},item[1]??0)
+                h('p',{style:{color:item[1]!=null&&item[1]>0?C.navy:C.muted,fontSize:18,fontWeight:900,margin:0,fontFamily:F}},item[1]??0)
               );
             })
           )
