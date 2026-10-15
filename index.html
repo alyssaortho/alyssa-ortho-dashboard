@@ -767,7 +767,7 @@ function RGCard({month,allFin,savePending}){
         const pct=v/20;
         const fillH=Math.round(188*pct);
         const fillY=18+188-fillH;
-        return h("rect",{x:22,y:fillY,width:46,height:fillH,rx:10,fill:"#6250d6"});
+        return h("rect",{x:22,y:fillY,width:46,height:fillH,rx:10,fill:"#FF6B00"});
       })(),
       h("line",{x1:8,y1:159,x2:22,y2:159,stroke:"#999",strokeWidth:1}),
       h("line",{x1:68,y1:159,x2:82,y2:159,stroke:"#999",strokeWidth:1}),
@@ -1432,28 +1432,28 @@ function Dashboard(){
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"AW 45min"),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW45"]?schedData[loc[1]+"_AW45"]+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_AW45"]?schedData[loc[1]+"_AW45"]+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 45min"),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON45"]?schedData[loc[1]+"_BON45"]+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON45"]?schedData[loc[1]+"_BON45"]+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 60min"),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON60"]?schedData[loc[1]+"_BON60"]+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON60"]?schedData[loc[1]+"_BON60"]+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:4,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"BON 75min"),
-                  h('span',{style:{color:C.blue,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON75"]?schedData[loc[1]+"_BON75"]+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_BON75"]?schedData[loc[1]+"_BON75"]+"wk":"--")
                 ),
                 h('p',{style:{color:C.muted,fontSize:8,fontWeight:700,textTransform:"uppercase",margin:"0 0 4px",fontFamily:F}},"REM"),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,marginBottom:2,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"SPKPD/DBF"),
-                  h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&(schedData[loc[1]+"_DBFREM"]||schedData[loc[1]+"_DBF"])?( schedData[loc[1]+"_DBFREM"]||schedData[loc[1]+"_DBF"])+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&(schedData[loc[1]+"_DBFREM"]||schedData[loc[1]+"_DBF"])?( schedData[loc[1]+"_DBFREM"]||schedData[loc[1]+"_DBF"])+"wk":"--")
                 ),
                 h('div',{style:{display:"flex",justifyContent:"space-between",padding:"3px 8px",background:C.panel,borderRadius:4,border:"1px solid "+C.border}},
                   h('span',{style:{color:C.subtext,fontSize:11,fontFamily:F}},"REM"),
-                  h('span',{style:{color:C.teal,fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_REM"]?schedData[loc[1]+"_REM"]+"wk":"--")
+                  h('span',{style:{color:loc[2],fontWeight:800,fontSize:12,fontFamily:F}},schedData&&schedData[loc[1]+"_REM"]?schedData[loc[1]+"_REM"]+"wk":"--")
                 )
               );
             }),
