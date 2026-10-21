@@ -1152,7 +1152,7 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
   const minPct=ts>0?((sam/ts)*100).toFixed(1):null;
   const rgRev=rg*RG_PRICE;
   const fmt=v=>v>0?"$"+v.toLocaleString():"--";
-  const accentFin=(v,t1,t2)=>v>=t1?C.green:v>=t2?C.blue:C.orange;
+  const accentFin=(v,t1,t2)=>v>=t1?C.royal:v>=t2?C.navy:C.orange;
   if(!unlocked)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:480,flexDirection:"column"}},
     h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:16,padding:"40px 48px",boxShadow:"0 4px 24px rgba(0,48,135,0.12)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,minWidth:320}},
       h("div",{style:{fontSize:40}},"Lock"),
@@ -1164,7 +1164,7 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
     )
   );
   if(editing)return h("div",null,
-    h(SH,{label:"Financial - Data Entry",color:C.green,month:month,section:"financial"}),
+    h(SH,{label:"Financial - Data Entry",color:C.royal,month:month,section:"financial"}),
     h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"32px 36px",maxWidth:580,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
       h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"0 0 24px",letterSpacing:"0.06em",textTransform:"uppercase"}},"Enter figures from OrthoFi Reports"),
       ...[
@@ -1188,7 +1188,7 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
     )
   );
   return h("div",null,
-    h(SH,{label:"Financial Overview",color:C.green,month:month,section:"financial"}),
+    h(SH,{label:"Financial Overview",color:C.royal,month:month,section:"financial"}),
     h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:16}},
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:12,fontWeight:700,fontFamily:F,cursor:"pointer"}},d?"Edit Data":"+ Enter Data")
     ),
@@ -1198,23 +1198,23 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
       h("button",{onClick:startEdit,style:{background:C.royal,color:C.white,border:"none",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:F,cursor:"pointer"}},"+ Enter Data")
     ):h("div",null,
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.royal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Start Production"),
-          h("p",{style:{color:C.blue,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(sp))
+          h("p",{style:{color:C.royal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(sp))
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.blue,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.navy,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Adjusted Production"),
-          h("p",{style:{color:C.blue,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(ap))
+          h("p",{style:{color:C.navy,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},fmt(ap))
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.green,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.orange,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Collection Total"),
-          h("p",{style:{color:C.green,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{try{const s=localStorage.getItem("ao_coll_2026");if(s){const c=JSON.parse(s)[month];if(c?.collectionTotal)return "$"+parseFloat(c.collectionTotal).toLocaleString("en-US",{minimumFractionDigits:2});}}catch(e){}return fmt(col);})())
+          h("p",{style:{color:C.orange,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{try{const s=localStorage.getItem("ao_coll_2026");if(s){const c=JSON.parse(s)[month];if(c?.collectionTotal)return "$"+parseFloat(c.collectionTotal).toLocaleString("en-US",{minimumFractionDigits:2});}}catch(e){}return fmt(col);})())
         )
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:24}},
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.royal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Starts"),
-          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{
+          h("p",{style:{color:C.royal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},(()=>{
             const sd=sheetData||{};
             const fin=allFin[month]||{};
             const sds=sd.totalSameDay??0;
@@ -1225,15 +1225,15 @@ function FinancialTab({month,allFin,setAllFin,sheetData}){
             return total>0?total:"--";
           })())
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.teal,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.navy,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Above Minimum $2,980"),
-          h("p",{style:{color:C.teal,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--")
+          h("p",{style:{color:C.navy,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},sam||"--")
         ),
-        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.purple,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
+        h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderTop:"4px solid "+C.orange,borderRadius:10,padding:"22px 24px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
           h("p",{style:{color:C.subtext,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"Retainer Guarantees"),
-          h("p",{style:{color:C.purple,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},rg||"--"),
+          h("p",{style:{color:C.orange,fontSize:34,fontWeight:900,margin:0,fontFamily:F}},rg||"--"),
           rg>0&&h("p",{style:{color:C.muted,fontSize:11,fontFamily:F,margin:"6px 0 0"}},fmt(rgRev)+" revenue"),
-          (()=>{const rgPctVal=allFin[month]?.rgPct!=null?parseFloat(allFin[month].rgPct):null;return rgPctVal!=null&&h("p",{style:{color:C.purple,fontSize:11,fontWeight:700,fontFamily:F,margin:"3px 0 0"}},rgPctVal.toFixed(1)+"% attach rate");})()
+          (()=>{const rgPctVal=allFin[month]?.rgPct!=null?parseFloat(allFin[month].rgPct):null;return rgPctVal!=null&&h("p",{style:{color:C.orange,fontSize:11,fontWeight:700,fontFamily:F,margin:"3px 0 0"}},rgPctVal.toFixed(1)+"% attach rate");})()
         )
       ),
       d.savedAt&&h("p",{style:{color:C.muted,fontSize:10,fontFamily:F,margin:"8px 0 0",textAlign:"right"}},"Last updated: "+new Date(d.savedAt).toLocaleString())
