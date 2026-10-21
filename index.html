@@ -1040,7 +1040,7 @@ function CollectionsTab({month,allFin,savePending}){
           h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Deducted from summary"),
           h("p",{style:{color:d.orthoFiFees?C.orange:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.orthoFiFees))
         ),
-        h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.orange,borderRadius:8,padding:"14px 16px"}},
+        h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.navy,borderRadius:8,padding:"14px 16px"}},
           h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Sunbit Production"),
           h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Deducted from summary"),
           h("p",{style:{color:d.sunbitProduction?C.orange:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.sunbitProduction))
@@ -1048,7 +1048,7 @@ function CollectionsTab({month,allFin,savePending}){
         h("div",{style:{background:C.panelAlt,border:"1px solid "+C.border,borderLeft:"3px solid "+C.green,borderRadius:8,padding:"14px 16px"}},
           h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 5px",fontFamily:F}},"Sunbit Deposit"),
           h("p",{style:{color:C.muted,fontSize:9,margin:"0 0 6px",fontFamily:F}},"Added back to collection summary"),
-          h("p",{style:{color:d.sunbitDeposit?C.green:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.sunbitDeposit))
+          h("p",{style:{color:d.sunbitDeposit?C.orange:C.muted,fontSize:22,fontWeight:900,margin:0,fontFamily:F}},fmt(d.sunbitDeposit))
         )
       ),
       h("div",{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"22px 26px",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
@@ -1057,7 +1057,7 @@ function CollectionsTab({month,allFin,savePending}){
           h("p",{style:{color:C.orange,fontSize:13,fontWeight:700,fontFamily:F,margin:0}},"Total Past Due: "+(totalPastDue>0?"$"+totalPastDue.toLocaleString("en-US",{minimumFractionDigits:2}):"--"))
         ),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}},
-          ...[["0–10 Days",d.due0_10,C.green],["11–30 Days",d.due11_30,C.blue],["31–60 Days",d.due31_60,C.orange],["61–90 Days",d.due61_90,C.orange],["90+ Days",d.due90plus,C.royal]].map(function(row){
+          ...[["0–10 Days",d.due0_10,C.orange],["11–30 Days",d.due11_30,C.royal],["31–60 Days",d.due31_60,C.blue],["61–90 Days",d.due61_90,C.navy],["90+ Days",d.due90plus,C.purple]].map(function(row){
             const val=fmt(row[1]);
             return h("div",{key:row[0],style:{background:C.panelAlt,border:"1px solid "+C.border,borderTop:"3px solid "+row[2],borderRadius:8,padding:"14px 16px"}},
               h("p",{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:"0 0 6px",fontFamily:F}},row[0]),
