@@ -729,9 +729,11 @@ function RGPctCard({month,allFin,savePending}){
   );
 }
 function RGCard({month,allFin,savePending}){
-  const rgVal=allFin[month]?.rgCount!=null?parseInt(allFin[month].rgCount)||0:null;
+  const _rgRaw=allFin[month]?.rgCount;
+  const rgVal=(_rgRaw!==undefined&&_rgRaw!==null&&_rgRaw!=="")?parseInt(_rgRaw)||0:null;
   const [editing,setEditing]=useState(false);
-  const [draft,setDraft]=useState(String(rgVal??""));
+  const [draft,setDraft]=useState(rgVal!=null?String(rgVal):"");
+  useEffect(()=>{setDraft(rgVal!=null?String(rgVal):"");setEditing(false);},[month]);
   const commit=()=>{
     const updated={...allFin,[month]:{...(allFin[month]||{}),rgCount:draft,savedAt:new Date().toISOString()}};
     savePending(month,null,updated[month]);
