@@ -626,9 +626,9 @@ function extractMonthData(labelList,hasBonham){
   };
 }
 
-function KpiCard({label,value,goal,large,isCount}){
+function KpiCard({label,value,goal,large,isCount,fixedColor}){
   const isTbd=value==null;
-  const col=isTbd?C.muted:(isCount?C.blue:accent(value,goal));
+  const col=isTbd?C.muted:(fixedColor||(isCount?C.blue:accent(value,goal)));
   const pp=(!isTbd&&!isCount&&goal)?Math.min((value/goal)*100,100):null;
   const sl=(!isTbd&&!isCount&&goal)?stxt(value,goal):null;
   return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderTop:`4px solid ${col}`,borderRadius:10,padding:large?"16px 16px 12px":"12px 14px 10px",display:"flex",flexDirection:"column",gap:5,boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}},
@@ -639,8 +639,8 @@ function KpiCard({label,value,goal,large,isCount}){
     pp!=null&&h('div',{style:{height:3,background:C.border,borderRadius:4,marginTop:4,overflow:"hidden"}},h('div',{style:{height:"100%",width:`${pp}%`,background:col,borderRadius:4}}))
   );
 }
-function MetricTile({label,value,goal}){
-  const isTbd=value==null;const col=isTbd?C.muted:accent(value,goal);
+function MetricTile({label,value,goal,fixedColor}){
+  const isTbd=value==null;const col=isTbd?C.muted:(fixedColor||accent(value,goal));
   return h('div',{style:{background:C.panelAlt,border:`1px solid ${C.border}`,borderLeft:`3px solid ${col}`,borderRadius:8,padding:"10px 14px",display:"flex",flexDirection:"column",gap:2}},
     h('p',{style:{color:C.muted,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",margin:0,fontFamily:F}},label),
     h('p',{style:{color:col,fontSize:22,fontWeight:900,margin:0,lineHeight:1,fontFamily:F}},isTbd?"—":`${value}%`),
@@ -1401,7 +1401,7 @@ function Dashboard(){
           h(StartsCard,{month,d,allFin,savePending}),
           h(RGCard,{month,allFin,savePending}),
           h(KpiCard,{label:"Same Day Conversion %",value:d.sdsTotal,goal:50,large:true}),
-          h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true})
+          h(KpiCard,{label:"EOM TRC %",value:d.eomTotal,goal:70,large:true,fixedColor:C.orange})
         ),
         h('div',{style:{background:C.panel,border:"1px solid "+C.border,borderRadius:8,padding:"10px 16px",marginBottom:8}},
           h('p',{style:{color:C.subtext,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px",fontFamily:F}},"CONVERSION BREAKDOWN BY LOCATION"),
@@ -1528,35 +1528,35 @@ function Dashboard(){
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}},
           h(KpiCard,{label:"New Exam Kept — All",value:d.newExamKeptAll,goal:85}),
           h('div',{style:{display:"flex",flexDirection:"column",gap:8}},
-            h(MetricTile,{label:"New Exam Kept — Denison",value:d.newExamKeptDenison,goal:85}),
-            h(MetricTile,{label:"New Exam Kept — Gainesville",value:d.newExamKeptGainesville,goal:85}),
-            d.hasBonham&&h(MetricTile,{label:"New Exam Kept — Bonham",value:d.newExamKeptBonham,goal:85})
+            h(MetricTile,{label:"New Exam Kept — Denison",fixedColor:C.royal,value:d.newExamKeptDenison,goal:85}),
+            h(MetricTile,{label:"New Exam Kept — Gainesville",fixedColor:C.royal,value:d.newExamKeptGainesville,goal:85}),
+            d.hasBonham&&h(MetricTile,{label:"New Exam Kept — Bonham",fixedColor:C.royal,value:d.newExamKeptBonham,goal:85})
           )
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:28}},
           h(KpiCard,{label:"OBS Kept — All",value:d.obsKeptAll,goal:85}),
           h('div',{style:{display:"flex",flexDirection:"column",gap:8}},
-            h(MetricTile,{label:"OBS Kept — Denison",value:d.obsKeptDenison,goal:85}),
-            h(MetricTile,{label:"OBS Kept — Gainesville",value:d.obsKeptGainesville,goal:85}),
-            d.hasBonham&&h(MetricTile,{label:"OBS Kept — Bonham",value:d.obsKeptBonham,goal:85})
+            h(MetricTile,{label:"OBS Kept — Denison",fixedColor:C.orange,value:d.obsKeptDenison,goal:85}),
+            h(MetricTile,{label:"OBS Kept — Gainesville",fixedColor:C.orange,value:d.obsKeptGainesville,goal:85}),
+            d.hasBonham&&h(MetricTile,{label:"OBS Kept — Bonham",fixedColor:C.orange,value:d.obsKeptBonham,goal:85})
           )
         ),
         h('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,marginBottom:20}},
-          h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.blue},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.teal}],title:"TOTAL APPTS COMPLETED"}),
+          h(Donut,{data:[{name:"New Exams",value:d.totalNewCompleted??0,color:C.royal},{name:"OBS/RR/P2",value:d.totalObsCompleted??0,color:C.orange}],title:"TOTAL APPTS COMPLETED"}),
           h(Donut,{data:[
-  {name:"Converted",value:d.newConverted??0,color:C.green},
+  {name:"Converted",value:d.newConverted??0,color:C.royal},
   {name:"Pending",value:d.newPending??0,color:C.orange},
   {name:"Into OBS",value:d.newIntoObs??0,color:C.silver},
-  {name:"Not Kept",value:d.newNotKept??0,color:C.orange}
+  {name:"Not Kept",value:d.newNotKept??0,color:C.navy}
 ].filter(x=>x.value>0),title:"NEW EXAM OUTCOMES"}),
-          h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.green},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
+          h(Donut,{data:[{name:"Converted",value:d.obsConverted??0,color:C.royal},{name:"Pending",value:d.obsPending??0,color:C.orange},{name:"Stayed OBS",value:d.obsStayed??0,color:C.silver}],title:"OBS / RR / P2 OUTCOMES"})
         )
       ),
       section==="tc"&&h(PinGate,{pin:TC_PIN,label:"TC Performance",storageKey:"tc_unlocked"},
         h("div",null,
           h(SH,{label:"TC Performance",color:C.orange,month,section:"tc"}),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}},
-            h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true}),
+            h(KpiCard,{label:"SDS%",value:d.sdsTotal,goal:50,large:true,fixedColor:C.navy}),
             h(KpiCard,{label:"EOM TRC%",value:d.eomTotal,goal:70,large:true}),
             h(RGPctCard,{month:month,allFin:allFin,savePending:savePending})
           ),
