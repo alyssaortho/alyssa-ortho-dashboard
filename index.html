@@ -424,8 +424,8 @@ function fetchCellValue(tabName,row,col){
     .catch(()=>null);
 }
 function fetchSheet(tabName){
-  // Fetch A(examType),F(txStatus),G(location),K(eomConv),M(label),N(value)
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+A,F,G,K,M,N&sheet=${encodeURIComponent(tabName)}`;
+  // Fetch A(examType),C(startDate),F(txStatus),G(location),K(eomConv),M(label),N(value)
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+A,C,F,G,K,M,N&sheet=${encodeURIComponent(tabName)}`;
   return fetch(url)
     .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
     .then(csv=>{
@@ -446,21 +446,25 @@ function fetchSheet(tabName){
       };
       for(let i=0;i<lines.length;i++){
         const p=parseRow(lines[i]);
-        // p[0]=A examType, p[1]=F txStatus, p[2]=G location,
-        // p[3]=K eomConv, p[4]=M label, p[5]=N value
-        const txStatus=(p[1]||"").toLowerCase();
-        const eomConv=(p[3]||"").toLowerCase();
-        const label=(p[4]||"");
-        const value=(p[5]||"");
-        // Count patient-level starts from col F
+        // p[0]=A examType, p[1]=C startDate, p[2]=F txStatus, p[3]=G location,
+        // p[4]=K eomConv, p[5]=M label, p[6]=N value
+        const txStatus=(p[2]||"").toLowerCase().trim();
+        const eomConv=(p[4]||"").toLowerCase().trim();
+        const label=(p[5]||"");
+        const value=(p[6]||"");
+        // Count Patient Started from col F
         if(txStatus==="patient started")patientStartedCount++;
-        // Count EOM conversions from col K (any non-empty value that isn't a header)
-        if(eomConv&&eomConv!=="eom conv"&&eomConv!=="eom conversion")eomConvCount++;
+        // Count EOM conversions: col K has a value that is a real flag
+        // (not empty, not header "eom conv", not "needs appt" which is a scheduling note)
+        if(eomConv&&eomConv!=="eom conv"&&eomConv!=="eom conversion"&&eomConv!=="needs appt"){
+          eomConvCount++;
+        }
         // Summary label/value pairs from cols M,N
-        if(label&&label!=="Label"&&label!=="In-House Notes")result.push({label,value});
+        if(label&&label!=="Label"&&label!=="In-House Notes"&&label!=="Totals"){
+          result.push({label,value});
+        }
       }
       if(result.length>2){
-        // Inject raw counts so extractMonthData can use them as fallbacks
         result.push({label:"__patientStartedCount__",value:String(patientStartedCount)});
         result.push({label:"__eomConvCount__",value:String(eomConvCount)});
         return result;
@@ -469,6 +473,7 @@ function fetchSheet(tabName){
     })
     .catch(e=>{console.error("fetchSheet error:",e);return null;});
 }
+
 function fetchRescheduled(tabName){
   // Scan col B (exam type) and G (tx status) to count Rescheduled by New vs OBS
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+A,F&sheet=${encodeURIComponent(tabName)}`;
