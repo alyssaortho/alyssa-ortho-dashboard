@@ -688,7 +688,7 @@ function GoalBar({data,title,height=240}){
   const CB=(props)=>{const{x,y,width,height:ht,value,goal}=props;
     const isZero=value===0;
     return h('g',null,
-      h('rect',{x,y:isZero?y-16:y,width,height:Math.max(ht||0,isZero?16:2),fill:isZero?C.border:accent(value,goal),rx:3}),
+      h('rect',{x,y:isZero?y-16:y,width,height:Math.max(ht||0,isZero?16:2),fill:isZero?C.border:C.royal,rx:3}),
       isZero&&h('text',{x:x+width/2,y:y-2,textAnchor:"middle",fill:C.muted,fontSize:10,fontFamily:F},"0%")
     );};
   const CT=({active,payload})=>{if(!active||!payload?.length)return null;const item=payload[0].payload;return h('div',{style:{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",fontFamily:F,fontSize:12}},h('p',{style:{color:C.text,fontWeight:700,margin:"0 0 4px"}},item.label),item.value?h('p',{style:{color:accent(item.value,item.goal),margin:0,fontWeight:700}},`${item.value}%`):h('p',{style:{color:C.muted,margin:0}},"No data"));};
@@ -699,7 +699,7 @@ function GoalBar({data,title,height=240}){
       h(XAxis,{dataKey:"label",tick:{fill:C.subtext,fontSize:11,fontFamily:F},axisLine:false,tickLine:false}),
       h(YAxis,{tick:{fill:C.subtext,fontSize:11,fontFamily:F},axisLine:false,tickLine:false,tickFormatter:v=>`${v}%`,domain:[0,100]}),
       h(Tooltip,{content:h(CT)}),
-      goalVal!=null&&h(ReferenceLine,{y:goalVal,stroke:C.royal,strokeDasharray:"6 3",strokeWidth:2,label:{value:`Goal ${goalVal}%`,position:"insideTopRight",fill:C.royal,fontSize:10,fontFamily:F}}),
+      goalVal!=null&&h(ReferenceLine,{y:goalVal,stroke:C.orange,strokeDasharray:"6 3",strokeWidth:2,label:{value:`Goal ${goalVal}%`,position:"insideTopRight",fill:C.orange,fontSize:10,fontFamily:F}}),
       h(Bar,{dataKey:"value",shape:h(CB)})
     ))
   );
