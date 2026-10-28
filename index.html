@@ -832,6 +832,7 @@ function RGCard({month,allFin,savePending}){
 function InlineEntry({label,value,onSave,color}){
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(String(value||""));
+  useEffect(()=>{setDraft(String(value||""));setEditing(false);},[value]);
   const commit=()=>{onSave(draft);setEditing(false);};
   return h("div",{style:{display:"flex",alignItems:"center",gap:6,margin:"2px 0"}},
     h("p",{style:{color:C.muted,fontSize:11,margin:0,fontFamily:F}},label+": "),
@@ -867,7 +868,7 @@ function StartsCard({month,d,allFin,savePending}){
         h("p",{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"SDS: "+sds),
         h("p",{style:{color:C.muted,fontSize:10,margin:0,fontFamily:F}},"EOM: "+eom),
         h(InlineEntry,{label:"Pending",value:pendingStarts,color:C.blue,onSave:function(v){savePending(month,v);}}),
-        h(InlineEntry,{label:"Deducted",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});}}),
+        h(InlineEntry,{key:"deducted-"+month,label:"Deducted",value:deductions,color:C.orange,onSave:function(v){savePending(month,null,{...(allFin[month]||{}),deductions:v});}),
         h("div",{style:{height:1,background:C.border,margin:"3px 0"}}),
         h("p",{style:{color:C.blue,fontSize:11,fontWeight:700,margin:0,fontFamily:F}},"Total: "+totalStarts),
         h("p",{style:{color:C.muted,fontSize:8,margin:0,fontFamily:F}},"SDS + EOM + Pending − Deductions")
