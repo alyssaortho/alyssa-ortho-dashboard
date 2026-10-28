@@ -424,27 +424,48 @@ function fetchCellValue(tabName,row,col){
     .catch(()=>null);
 }
 function fetchSheet(tabName){
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+M,N&sheet=${encodeURIComponent(tabName)}`;
+  // Fetch A(examType),F(txStatus),G(location),K(eomConv),M(label),N(value)
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+A,F,G,K,M,N&sheet=${encodeURIComponent(tabName)}`;
   return fetch(url)
     .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
     .then(csv=>{
       const lines=csv.split("\n").filter(l=>l.trim());
       const result=[];
-      for(let i=0;i<lines.length;i++){
-        const line=lines[i];
-        const parts=[];let c2="",inQ2=false;
+      let patientStartedCount=0;
+      let eomConvCount=0;
+      const parseRow=(line)=>{
+        const parts=[];let c="",inQ=false;
         for(let j=0;j<line.length;j++){
           const ch=line[j];
-          if(ch==='"'){if(inQ2&&line[j+1]==='"'){c2+='"';j++;}else inQ2=!inQ2;}
-          else if(ch===","&&!inQ2){parts.push(c2);c2="";}
-          else c2+=ch;
+          if(ch==='"'){if(inQ&&line[j+1]==='"'){c+='"';j++;}else inQ=!inQ;}
+          else if(ch===","&&!inQ){parts.push(c.trim());c="";}
+          else c+=ch;
         }
-        parts.push(c2);
-        const label=(parts[0]||"").trim().replace(/^"|"$/g,"");
-        const value=(parts[1]||"").trim().replace(/^"|"$/g,"");
-        if(label&&label!=="Label")result.push({label,value});
+        parts.push(c.trim());
+        return parts.map(p=>p.replace(/^"|"$/g,"").trim());
+      };
+      for(let i=0;i<lines.length;i++){
+        const p=parseRow(lines[i]);
+        // p[0]=A examType, p[1]=F txStatus, p[2]=G location,
+        // p[3]=K eomConv, p[4]=M label, p[5]=N value
+        const txStatus=(p[1]||"").toLowerCase();
+        const eomConv=(p[3]||"").toLowerCase();
+        const label=(p[4]||"");
+        const value=(p[5]||"");
+        // Count patient-level starts from col F
+        if(txStatus==="patient started")patientStartedCount++;
+        // Count EOM conversions from col K (any non-empty value that isn't a header)
+        if(eomConv&&eomConv!=="eom conv"&&eomConv!=="eom conversion")eomConvCount++;
+        // Summary label/value pairs from cols M,N
+        if(label&&label!=="Label"&&label!=="In-House Notes")result.push({label,value});
       }
-      return result.length>2?result:null;
+      if(result.length>2){
+        // Inject raw counts so extractMonthData can use them as fallbacks
+        result.push({label:"__patientStartedCount__",value:String(patientStartedCount)});
+        result.push({label:"__eomConvCount__",value:String(eomConvCount)});
+        return result;
+      }
+      return null;
     })
     .catch(e=>{console.error("fetchSheet error:",e);return null;});
 }
@@ -588,7 +609,12 @@ function extractMonthData(labelList,hasBonham){
     obsKeptGainesville:pct(get("All OBSERVATION Kept Rate OBS/RR/P2- Gainesville","All OBSERVATION Kept Rate OBS/RR/P2 - Gainesville")),
     obsKeptBonham:hasBonham?pct(get("All OBSERVATION Kept Rate OBS/RR/P2 - Bonham","All OBSERVATION Kept Rate OBS/RR/P2- Bonham")):null,
     sdsTotal:pct(get("Same Day Conversion (Both Locations)","Same Day Conversion (All Locations)")),sdsGoal:50,
-    totalSameDay:num(get("Total Same Day Starts (Both Locations)","Total Same Day Starts (All Locations)")),
+    totalSameDay:(()=>{
+      const fromLabel=num(get("Total Same Day Starts (Both Locations)","Total Same Day Starts (All Locations)"));
+      if(fromLabel!=null)return fromLabel;
+      const fromRows=num(get("__patientStartedCount__"));
+      return fromRows;
+    })(),
     denStarts:num(get("Total Same Day Starts - Denison")),gainStarts:num(get("Total Same Day Starts - Gainesville")),
     bonStarts:hasBonham?num(get("Total Same Day Starts - Bonham")):null,
     eomTotal:pct(get("EOM TRC ALL EXAMS (Both Locations)","EOM TRC ALL EXAMS (All Locations)")),eomTotalGoal:70,
@@ -598,7 +624,12 @@ function extractMonthData(labelList,hasBonham){
     eomObsBonham:hasBonham?pct(get("EOM OBS (OBS/RR/P2) - Bonham")):null,
     eomNewAll:pct(get("EOM TRC New Exam Conversion (Both Locations)","EOM TRC New Exam Conversion (All Locations)")),
     eomObsAll:pct(get("EOM TRC OBS (OBS/RR/P2) Conversion (Both Locations)","EOM TRC OBS (OBS/RR/P2) Conversion (All Locations)")),
-    eomConverted:num(get("# of patients converted at EOM")),
+    eomConverted:(()=>{
+      const fromLabel=num(get("# of patients converted at EOM"));
+      if(fromLabel!=null)return fromLabel;
+      const fromRows=num(get("__eomConvCount__"));
+      return fromRows;
+    })(),
     totalNewCompleted:num(get("Total # of New Exams Completed")),totalObsCompleted:num(get("Total # of Observation (OBS/RR/P2) Appt Completed")),
     newConverted:num(get("Total # of New Exams Converted")),newPending:num(get("Total # of New Exams that went into Pending")),
     newIntoObs:num(get("Total # of New Exams that went into OBS")),obsConverted:num(get("Total # of OBS (OBS/RR/P2) Converted")),
