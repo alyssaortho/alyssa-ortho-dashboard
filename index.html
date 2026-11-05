@@ -425,7 +425,7 @@ function fetchCellValue(tabName,row,col){
 }
 function fetchSheet(tabName){
   // Fetch A(examType),C(startDate),F(txStatus),G(location),K(eomConv),M(label),N(value)
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+A,C,F,G,K,M,N&sheet=${encodeURIComponent(tabName)}`;
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+B,C,F,G,K,M,N&sheet=${encodeURIComponent(tabName)}`;
   return fetch(url)
     .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
     .then(csv=>{
@@ -433,6 +433,7 @@ function fetchSheet(tabName){
       const result=[];
       let patientStartedCount=0;
       let eomConvCount=0;
+      const monthTally={};
       const parseRow=(line)=>{
         const parts=[];let c="",inQ=false;
         for(let j=0;j<line.length;j++){
@@ -454,17 +455,20 @@ function fetchSheet(tabName){
         const value=(p[6]||"");
         // Count Patient Started from col F
         if(txStatus==="patient started")patientStartedCount++;
+        const dm=(p[0]||"").match(/^(\d{1,2})\/\d{1,2}\/\d{4}/)||(p[0]||"").match(/^\d{4}-(\d{2})-\d{2}/);
+        if(dm){const mm=parseInt(dm[1],10);monthTally[mm]=(monthTally[mm]||0)+1;}
         // Count EOM conversions: col K has a value that is a real flag
         // (not empty, not header "eom conv", not "needs appt" which is a scheduling note)
-        if(eomConv&&eomConv!=="eom conv"&&eomConv!=="eom conversion"&&eomConv!=="needs appt"){
-          eomConvCount++;
-        }
+        if(/^pat\w*\s+started$/.test(eomConv)){eomConvCount++;}
         // Summary label/value pairs from cols M,N
         if(label&&label!=="Label"&&label!=="In-House Notes"&&label!=="Totals"){
           result.push({label,value});
         }
       }
       if(result.length>2){
+        let domM=null,domC=0;
+        for(const k in monthTally){if(monthTally[k]>domC){domC=monthTally[k];domM=parseInt(k,10);}}
+        result.push({label:"__dominantMonth__",value:domM==null?"":String(domM)});
         result.push({label:"__patientStartedCount__",value:String(patientStartedCount)});
         result.push({label:"__eomConvCount__",value:String(eomConvCount)});
         return result;
@@ -630,10 +634,10 @@ function extractMonthData(labelList,hasBonham){
     eomNewAll:pct(get("EOM TRC New Exam Conversion (Both Locations)","EOM TRC New Exam Conversion (All Locations)")),
     eomObsAll:pct(get("EOM TRC OBS (OBS/RR/P2) Conversion (Both Locations)","EOM TRC OBS (OBS/RR/P2) Conversion (All Locations)")),
     eomConverted:(()=>{
-      const fromLabel=num(get("# of patients converted at EOM"));
-      if(fromLabel!=null)return fromLabel;
       const fromRows=num(get("__eomConvCount__"));
-      return fromRows;
+      const fromLabel=num(get("# of patients converted at EOM"));
+      if(fromRows!=null&&fromRows>0)return fromRows;
+      return fromLabel!=null?fromLabel:fromRows;
     })(),
     totalNewCompleted:num(get("Total # of New Exams Completed")),totalObsCompleted:num(get("Total # of Observation (OBS/RR/P2) Appt Completed")),
     newConverted:num(get("Total # of New Exams Converted")),newPending:num(get("Total # of New Exams that went into Pending")),
@@ -1370,8 +1374,11 @@ function Dashboard(){
           const hasMonthLabel=data.some(r=>r.label&&r.label.toLowerCase().includes(tabMonthAbbr));
           // If no month-specific label found, also accept if row count is high (real data)
           const likelyCorrectTab=data.length>20||(parsed.totalNewExams!=null&&parsed.totalNewExams>0);
-          if(hasRealData&&likelyCorrectTab){results[key]=parsed;console.log(`${key}: loaded rows=${data.length}`);}
-          else{console.warn(`${key}: skipped - hasRealData=${hasRealData} rows=${data.length} likelyCorrect=${likelyCorrectTab}`);}
+          const dmRow=data.find(r=>r.label==="__dominantMonth__");
+          const dmVal=(dmRow&&dmRow.value!=="")?parseInt(dmRow.value,10):null;
+          const monthOk=dmVal==null||dmVal===mo+1;
+          if(hasRealData&&likelyCorrectTab&&monthOk){results[key]=parsed;console.log(`${key}: loaded rows=${data.length}`);}
+          else{console.warn(`${key}: skipped - hasRealData=${hasRealData} rows=${data.length} likelyCorrect=${likelyCorrectTab} monthOk=${monthOk}`);}
         }else{
           console.warn(`${key}: skipped - only ${rowCount} rows`);
         }
