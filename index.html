@@ -478,6 +478,34 @@ function fetchSheet(tabName){
     .catch(e=>{console.error("fetchSheet error:",e);return null;});
 }
 
+function tabCandidates(tab,mo){
+  const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const base=tab.split("'")[0].replace(/[’]/g,"").trim();
+  const names=[base,MONTHS[mo].slice(0,3),MONTHS[mo]];
+  if(mo===8){names.push("Sept");names.push("Sep");}
+  const sufs=["'26","' 26","’26","’ 26"];
+  const out=[tab];
+  names.forEach(n=>sufs.forEach(s=>out.push(n+" "+s)));
+  return out.filter((v,i)=>out.indexOf(v)===i);
+}
+async function resolveTab(tab,mo){
+  // Google silently returns the FIRST tab when a name does not exist, so a tab only counts
+  // if its exam dates belong to the expected month.
+  for(const cand of tabCandidates(tab,mo)){
+    try{
+      const d=await fetchSheet(cand);
+      if(!d)continue;
+      const dmRow=d.find(r=>r.label==="__dominantMonth__");
+      const dmVal=(dmRow&&dmRow.value!=="")?parseInt(dmRow.value,10):null;
+      if(dmVal==null||dmVal===mo+1){
+        if(cand!==tab)console.log(`Tab for month ${mo+1}: using "${cand}" (expected "${tab}")`);
+        return {tab:cand,data:d};
+      }
+    }catch(e){}
+  }
+  console.warn(`No tab found for month ${mo+1} (tried ${tabCandidates(tab,mo).length} name variants)`);
+  return null;
+}
 function fetchRescheduled(tabName){
   // Scan col B (exam type) and G (tx status) to count Rescheduled by New vs OBS
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&tq=select+A,F&sheet=${encodeURIComponent(tabName)}`;
@@ -1153,13 +1181,13 @@ const SHEET_TABS=[
   {key:"March",tab:"March '26",hasBonham:false,examRow:8,mo:2},
   {key:"April",tab:"April '26",hasBonham:false,examRow:8,mo:3},
   {key:"May",tab:"May '26",hasBonham:true,examRow:8,mo:4},
-  {key:"June",tab:"Jun '26",hasBonham:true,examRow:8,mo:5},
-  {key:"July",tab:"Jul '26",hasBonham:true,examRow:8,mo:6},
+  {key:"June",tab:"June '26",hasBonham:true,examRow:8,mo:5},
+  {key:"July",tab:"July '26",hasBonham:true,examRow:8,mo:6},
   {key:"August",tab:"Aug '26",hasBonham:true,examRow:8,mo:7},
   {key:"September",tab:"Sept '26",hasBonham:true,examRow:8,mo:8},
   {key:"October",tab:"Oct '26",hasBonham:true,examRow:8,mo:9},
   {key:"November",tab:"Nov '26",hasBonham:true,examRow:8,mo:10},
-  {key:"December",tab:"Dec '26",hasBonham:true,examRow:8,mo:11},
+  {key:"December",tab:"Dec ' 26",hasBonham:true,examRow:8,mo:11},
 ];
 const MONTH_KEYS=SHEET_TABS.map(function(s){return s.key;});
 const NOW_MO=new Date().getMonth();
@@ -1345,12 +1373,15 @@ function Dashboard(){
 
     let count=0;
     const debugLog=[];
-    for(const {key,tab,hasBonham,examRow,mo} of FETCHABLE_TABS){
+    for(const {key,tab:baseTab,hasBonham,examRow,mo} of FETCHABLE_TABS){
       setLoadMsg(`Loading ${key}… (${++count}/12)`);
       try{
         // Skip if tab likely doesn't exist yet (current month within first week, or future)
         // Pre-check: fetch just 1 row - if Google returns wrong tab, row 1 won't have our header
-        const [data,resched]=await Promise.all([fetchSheet(tab),fetchRescheduled(tab)]);
+        const resolved=await resolveTab(baseTab,mo);
+        const tab=resolved?resolved.tab:baseTab;
+        const data=resolved?resolved.data:null;
+        const resched=resolved?await fetchRescheduled(tab):null;
         const rowCount=data?data.length:0;
         if(data&&data.length>5){
           const parsed=extractMonthData(data,hasBonham);
